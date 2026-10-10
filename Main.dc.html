@@ -1,0 +1,1466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WAST traction explorer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.root{--ease:cubic-bezier(.32,.72,0,1);transition:background .6s var(--ease),color .6s var(--ease)}
+.root a{color:var(--fg);text-decoration:none}
+.root a:hover{color:var(--mint)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 56px;box-sizing:border-box}
+.h1{font-size:54px}
+.h2{font-size:36px}
+.mono{font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.btn{transition:transform .5s var(--ease),background .4s var(--ease),color .4s var(--ease)}
+.btn:hover{transform:translateY(-2px)}
+.btn:hover .arr{transform:translate(2px,-2px) scale(1.06)}
+.arr{transition:transform .5s var(--ease)}
+.chip{transition:background .5s var(--ease),color .5s var(--ease),border-color .5s var(--ease),transform .5s var(--ease)}
+.chip:hover{transform:translateY(-1px)}
+.nd{transition:cx 1.1s var(--ease),cy 1.1s var(--ease),r 1.1s var(--ease),fill 1s var(--ease),opacity .7s var(--ease);transform-box:fill-box;transform-origin:center}
+.eg{transition:d 1.1s var(--ease),stroke 1s var(--ease),opacity .7s var(--ease),stroke-width .7s var(--ease)}
+.cl{transition:cx 1.1s var(--ease),cy 1.1s var(--ease),r 1.1s var(--ease),fill 1s var(--ease),opacity .8s var(--ease)}
+.lb{transition:x 1.1s var(--ease),y 1.1s var(--ease),fill 1s var(--ease),opacity .6s var(--ease)}
+.moving .nd{animation:float 6s ease-in-out infinite alternate}
+.moving .flow{stroke-dasharray:3 9;animation:flow 2.8s linear infinite}
+.moving .blob{animation:drift 22s ease-in-out infinite alternate}
+.moving .tick{animation:tick 110s linear infinite}
+.ar.moving .tick{animation-direction:reverse}
+.moving .pulse{animation:pulse 2.4s ease-out infinite}
+.moving .prog{animation:prog 7s linear both}
+.grow{transform-box:fill-box;transform-origin:left center}
+.moving .grow{animation:grow 1.2s var(--ease) both}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.rise2{transform-box:fill-box;transform-origin:center bottom}
+.moving .rise2{animation:rise2 1.2s var(--ease) both}
+@keyframes rise2{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes prog{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.oneline{white-space:nowrap}
+.social{display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:14px;min-height:34px;border-top:1px solid var(--line);transition:padding .5s var(--ease)}
+.social:hover{padding-left:6px}
+@keyframes float{from{transform:translate(0,0)}to{transform:translate(2.5px,-3px)}}
+@keyframes flow{to{stroke-dashoffset:-48}}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(60px,-40px) scale(1.15)}}
+@keyframes tick{to{transform:translateX(-50%)}}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(18px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+.rise{animation:rise 1s var(--ease) both}
+.strip{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:76px;padding:4px 76px 4px;scrollbar-width:none;-ms-overflow-style:none}
+.strip::-webkit-scrollbar{display:none}
+.sarrow{position:absolute;top:110px;z-index:2;width:48px;height:48px;border-radius:999px;border:1px solid var(--altLine);background:var(--alt);color:var(--altInk);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(20,10,14,0.18);transition:transform .3s var(--ease),background .3s var(--ease)}
+.sarrow:hover{transform:scale(1.06)}
+.sarrow:focus-visible{outline:2px solid var(--altAccent);outline-offset:3px}
+.strip>*{scroll-snap-align:start}
+.card:hover .lift{transform:translateY(-4px)}
+.lift{transition:transform .7s var(--ease)}
+.ar *{letter-spacing:0!important}
+.ar .mono{font-family:var(--ff);text-transform:none;font-size:13px}
+.ar .h1{line-height:1.3!important}
+.ar .h2{line-height:1.35!important}
+.ar .sarrow svg{transform:scaleX(-1)}
+.ar .social:hover{padding-left:0;padding-right:6px}
+@media (max-width:760px){
+.wrap{padding:0 16px}
+.strip{padding:4px 60px 4px;scroll-padding-inline:60px}
+.sarrow{width:40px;height:40px;top:114px}
+.h1{font-size:46px}
+.h2{font-size:28px}
+.oneline{white-space:normal}
+}
+</style>
+</helmet>
+<div class="root {{motionCls}} {{langCls}}" dir="{{dir}}" lang="{{lang}}" style="width: 100%; background: var(--bg); color: var(--fg); font-family: var(--ff); overflow: hidden; {{themeVars}}">
+
+<header style="width: 100%; background: var(--shell); border-bottom: 1px solid var(--line)">
+<nav aria-label="Main" class="wrap" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 6px; padding-bottom: 6px">
+<a href="#top" aria-label="WAST home" style="display: flex; align-items: center"><img src="{{logo}}" alt="WAST وسط" style="height: 40px; width: auto"></a>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 36px; font-size: 14px">
+<a href="#stories" style="padding: 12px 0; color: var(--fg2)">{{ui.stories}}</a>
+<a href="#method" style="padding: 12px 0; color: var(--fg2)">{{ui.built}}</a>
+<a href="#footer" style="padding: 12px 0; color: var(--fg2)">{{ui.about}}</a>
+<button type="button" onClick="{{toggleLang}}" lang="{{otherLang}}" aria-label="{{langAria}}" style="padding: 12px 0; border: none; background: transparent; cursor: pointer; font: inherit; font-family: {{langBtnFont}}; font-size: 15px; color: var(--fg2)">{{ui.langBtn}}</button>
+<button type="button" class="chip" onClick="{{toggleTheme}}" aria-label="{{themeLabel}}" style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" style="fill: none; stroke: var(--fg); stroke-width: 1.4"></circle><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" style="fill: var(--fg)"></path></svg></button>
+<a href="#footer" class="btn" style="display: flex; align-items: center; gap: 10px; background: var(--fg); color: var(--bg); border-radius: 999px; padding: 6px 6px 6px 18px; font-weight: 500">{{ui.brief}}<span class="arr" style="width: 32px; height: 32px; border-radius: 999px; background: var(--bg); display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 9.5 9.5 2.5M4 2.5h5.5V8" style="fill: none; stroke: var(--fg); stroke-width: 1.4"></path></svg></span></a>
+</div>
+</nav>
+</header>
+
+<section id="top" class="wrap" style="position: relative; padding-top: 36px; padding-bottom: 36px">
+<div class="blob" aria-hidden="true" style="position: absolute; left: -10%; top: 10%; width: 620px; height: 620px; border-radius: 50%; background: radial-gradient(circle, var(--blob1) 0%, transparent 68%); pointer-events: none"></div>
+<div class="blob" aria-hidden="true" style="position: absolute; right: -8%; bottom: -10%; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, var(--blob2) 0%, transparent 70%); pointer-events: none; animation-delay: -9s"></div>
+<div style="position: relative; display: flex; flex-wrap: wrap; gap: 36px; align-items: stretch">
+<div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<div class="mono rise" style="align-self: flex-start; display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; color: var(--mint)">
+<span style="position: relative; width: 8px; height: 8px"><span class="pulse" style="position: absolute; inset: 0; border-radius: 50%; background: var(--mint)"></span><span style="position: absolute; inset: 0; border-radius: 50%; background: var(--mint)"></span></span>
+{{ui.badge}}
+</div>
+<h1 class="h1 rise" style="margin: 0; font-weight: 600; line-height: 1; letter-spacing: -0.045em; max-width: 640px; animation-delay: .08s">{{ui.h1a}}<span style="color: var(--accent)">{{ui.h1b}}</span>{{ui.h1c}}</h1>
+<p class="rise" style="margin: 0; font-size: 17px; line-height: 1.55; color: var(--fg2); max-width: 460px; animation-delay: .16s">{{ui.heroP}}</p>
+<div class="rise" style="display: flex; flex-wrap: wrap; align-items: center; gap: 22px; animation-delay: .24s">
+<a href="#stories" class="btn" style="display: flex; align-items: center; gap: 10px; background: var(--accent); color: var(--accentInk); border-radius: 999px; padding: 6px 6px 6px 20px; font-size: 14px; font-weight: 600">{{ui.read}}<span class="arr" style="width: 32px; height: 32px; border-radius: 999px; background: rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11 11 3M5 3h6v6" style="fill: none; stroke: var(--accentInk); stroke-width: 1.6"></path></svg></span></a>
+<a href="#method" style="font-size: 13px; color: var(--fg2); border-bottom: 1px solid var(--line2); padding-bottom: 2px">{{ui.built}}</a>
+</div>
+</div>
+
+<div class="rise" style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; animation-delay: .2s">
+<div style="flex-grow: 1; display: flex; flex-direction: column; background: var(--shell); border: 1px solid var(--line); border-radius: 34px; padding: 7px">
+<div style="position: relative; border-radius: 28px; overflow: hidden; flex-grow: 1; min-height: 300px; background: var(--heroBg); box-shadow: inset 0 1px 0 var(--line)">
+<svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<sc-for list="{{hero.edges}}" as="e" hint-placeholder-count="20"><path class="eg {{e.cls}}" d="{{e.d}}" fill="none" stroke="{{e.stroke}}" stroke-width="{{e.w}}" opacity="{{e.op}}"></path></sc-for>
+<sc-for list="{{hero.nodes}}" as="n" hint-placeholder-count="20"><circle class="nd" cx="{{n.x}}" cy="{{n.y}}" r="{{n.r}}" fill="{{n.fill}}" opacity="{{n.op}}" style="animation-delay: {{n.dl}}; animation-duration: {{n.du}}"></circle></sc-for>
+</svg>
+<div style="position: absolute; left: 18px; right: 18px; top: 18px; display: flex; justify-content: space-between; gap: 12px; align-items: flex-start">
+<div class="mono" style="background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--fg2)">{{ui.featured}} · {{heroStory.count}}</div>
+<div style="background: var(--glass); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--fg2)">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent)"></span>{{ui.said}}</div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 2px; background: var(--fg)"></span>{{ui.connects}}</div>
+</div>
+</div>
+<div style="position: absolute; left: 14px; bottom: 14px; right: 14px; background: var(--glass); border: 1px solid var(--line); border-radius: 22px; padding: 16px 16px 14px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 8px"><sc-for list="{{heroStory.flags}}" as="f" hint-placeholder-count="2"><img src="{{f.src}}" alt="{{f.name}} flag" style="width: 21px; height: 16px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px var(--line2)"></sc-for><span class="mono" style="color: var(--fg); font-weight: 500">{{heroStory.kicker}}</span></div>
+<div style="font-size: 19px; font-weight: 600; line-height: 1.25; letter-spacing: -0.015em">{{heroStory.title}}</div>
+</div>
+<a href="#stories" class="btn" aria-label="Look into this story: {{heroStory.title}}" style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; background: var(--fg); color: var(--bg); border-radius: 999px; padding: 6px 6px 6px 16px; font-size: 14px; font-weight: 500">{{ui.look}}<span class="arr" style="width: 32px; height: 32px; border-radius: 999px; background: var(--bg); display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 9.5 9.5 2.5M4 2.5h5.5V8" style="fill: none; stroke: var(--fg); stroke-width: 1.4"></path></svg></span></a>
+</div>
+<div role="group" aria-label="Featured stories" style="display: flex; gap: 6px">
+<sc-for list="{{heroDots}}" as="d" hint-placeholder-count="3"><button type="button" onClick="{{d.pick}}" aria-label="{{d.label}}" aria-pressed="{{d.on}}" style="flex: 1; height: 24px; padding: 10px 0; border: none; background: transparent; cursor: pointer"><span style="display: block; height: 4px; border-radius: 4px; overflow: hidden; background: var(--line2)"><span class="{{d.cls}}" style="display: block; height: 4px; border-radius: 4px; background: var(--accent); transform-origin: left; transform: {{d.tf}}"></span></span></button></sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<div aria-label="Contexts WAST tracks" style="border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; display: flex; align-items: center">
+<div class="mono" style="flex: 0 0 auto; padding: 10px 20px; color: var(--mint); border-inline-end: 1px solid var(--line); background: var(--bg); position: relative; z-index: 1">{{ui.tracking}}</div>
+<div dir="ltr" style="flex: 1 1 auto; min-width: 0; overflow: hidden"><div class="tick" style="display: flex; white-space: nowrap; width: max-content">
+<sc-for list="{{ticker}}" as="k" hint-placeholder-count="12"><span dir="auto" style="display: inline-flex; align-items: center; gap: 16px; padding: 9px 16px; font-size: 14px; color: var(--fg2)">{{k.label}}<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="none" stroke="{{k.color}}" stroke-width="1.6"></circle></svg></span></sc-for>
+</div></div>
+</div>
+
+<section id="stories" style="background: var(--alt); color: var(--altInk); padding: 36px 0 36px; margin: 36px 36px 0; border-radius: 36px 36px 0 0; overflow: hidden; border: 1px solid var(--altBorder); border-bottom: none">
+<div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 36px">
+<div style="display: flex; flex-direction: column; gap: 18px; max-width: 680px">
+<div class="mono" style="color: var(--altAccent)">{{ui.stories}}</div>
+<h2 class="h2" style="margin: 0; font-weight: 600; line-height: 1.02; letter-spacing: -0.035em">{{ui.storiesH}}</h2>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: var(--altMut); max-width: 380px; text-wrap: balance">{{ui.storiesP}}</p>
+</div>
+<div style="position: relative">
+<button type="button" class="sarrow" onClick="{{storiesPrev}}" aria-label="{{ui.prev}}" style="inset-inline-start: 14px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"></path></svg></button>
+<button type="button" class="sarrow" onClick="{{storiesNext}}" aria-label="{{ui.next}}" style="inset-inline-end: 14px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"></path></svg></button>
+<div class="strip">
+<sc-for list="{{stories}}" as="s" hint-placeholder-count="5">
+<a href="{{s.href}}" onClick="{{carry}}" class="card" aria-label="Read story: {{s.title}}" style="flex: 0 0 {{s.w}}; color: var(--altInk); display: flex; flex-direction: column; gap: 10px">
+<div class="lift" style="position: relative; height: 260px; border-radius: 22px; overflow: hidden; background: {{s.bg}}">
+<sc-if value="{{s.photo}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0; background: radial-gradient(70% 60% at 60% 30%, rgba(232,131,143,0.35), rgba(232,131,143,0) 70%), radial-gradient(50% 40% at 30% 80%, rgba(63,184,168,0.25), rgba(63,184,168,0) 70%)"></div>
+<div style="position: absolute; left: 12px; bottom: 12px; right: 12px; border: 1px dashed rgba(242,236,228,0.35); border-radius: 12px; padding: 8px 10px; font-size: 11px; line-height: 1.5; color: #E4DAD6; background: rgba(20,10,14,0.55)">[Photo slot] Woman on a phone at night, Tasso Mitsarakis on Unsplash</div>
+</sc-if>
+<svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<sc-for list="{{s.v.paths}}" as="p" hint-placeholder-count="6"><path class="{{p.cls}}" d="{{p.d}}" fill="{{p.fill}}" stroke="{{p.stroke}}" stroke-width="{{p.w}}" opacity="{{p.op}}" stroke-linecap="round" style="animation-delay: {{p.dl}}"></path></sc-for>
+<sc-for list="{{s.v.rects}}" as="r" hint-placeholder-count="4"><rect class="{{r.cls}}" x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" rx="{{r.rx}}" fill="{{r.fill}}" opacity="{{r.op}}" style="animation-delay: {{r.dl}}"></rect></sc-for>
+<sc-for list="{{s.v.circles}}" as="c" hint-placeholder-count="6"><circle class="{{c.cls}}" cx="{{c.x}}" cy="{{c.y}}" r="{{c.r}}" fill="{{c.fill}}" opacity="{{c.op}}" stroke="{{c.stroke}}" stroke-width="{{c.sw}}" style="animation-delay: {{c.dl}}; animation-duration: {{c.du}}"></circle></sc-for>
+</svg>
+<sc-for list="{{s.v.texts}}" as="t" hint-placeholder-count="3"><div style="{{t.css}}">{{t.t}}</div></sc-for>
+<div style="position: absolute; top: 12px; left: 12px; right: 12px; display: flex; align-items: center; gap: 6px; direction: ltr"><span class="mono" style="background: rgba(20,10,14,0.6); color: #F2ECE4; border-radius: 999px; padding: 6px 10px; font-size: 10px">{{s.kicker}}</span><sc-for list="{{s.flags}}" as="f" hint-placeholder-count="2"><img src="{{f.src}}" alt="{{f.name}} flag" style="width: 21px; height: 16px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px rgba(242,236,228,0.35)"></sc-for></div>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 0 6px">
+<div style="font-size: 17px; font-weight: 600; line-height: 1.25; letter-spacing: -0.015em">{{s.title}}</div>
+<span style="flex: 0 0 auto; width: 30px; height: 30px; border-radius: 999px; background: var(--altInk); display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11 11 3M5 3h6v6" style="fill: none; stroke: var(--alt); stroke-width: 1.6"></path></svg></span>
+</div>
+<div class="mono" style="color: var(--altMut); padding: 0 6px">{{ui.sample}} · {{s.label}}</div>
+</a>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="method" style="background: var(--alt); color: var(--altInk); margin: 0 36px; border-radius: 0; border: 1px solid var(--altBorder); border-top: none">
+<div class="wrap" style="padding-top: 0; padding-bottom: 84px; display: flex; flex-wrap: wrap; gap: 36px 108px">
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+<div class="mono" style="color: var(--altAccent)">{{ui.built}}</div>
+<h2 class="h2" style="margin: 0; font-weight: 600; line-height: 1.02; letter-spacing: -0.035em">{{ui.builtH}}</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.65; color: var(--altMut); max-width: 420px">{{ui.builtP}}</p>
+</div>
+<div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column">
+<sc-for list="{{principles}}" as="p" hint-placeholder-count="4">
+<div style="display: flex; flex-wrap: wrap; gap: 12px 32px; padding: 28px 0; border-top: 1px solid var(--altLine)">
+<div class="mono" style="flex: 0 0 48px; color: var(--altAccent); padding-top: 6px">{{p.n}}</div>
+<div style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">{{p.t}}</div>
+<div style="font-size: 15px; line-height: 1.65; color: var(--altMut)">{{p.d}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<footer id="footer" style="position: relative; z-index: 2; margin-top: -48px; background: var(--bg); border-top: 1px solid var(--line2); box-shadow: 0 -18px 40px var(--footShade); padding: 36px 0 36px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 36px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: stretch; gap: 36px">
+<div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column">
+<img src="{{logo}}" alt="WAST وسط" style="height: 84px; width: auto; max-width: 100%; align-self: flex-start">
+</div>
+<nav aria-label="Contact WAST" style="flex: 0 1 380px; min-width: 0; display: flex; flex-direction: column; border-bottom: 1px solid var(--line)">
+<sc-for list="{{socials}}" as="s" hint-placeholder-count="4">
+<a href="#footer" class="social" aria-label="WAST on {{s.name}}">
+<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="{{s.icon}}" style="fill: var(--fg)"></path></svg>
+<span style="font-size: 14px; font-weight: 500">{{s.name}}</span>
+<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 9.5 9.5 2.5M4 2.5h5.5V8" style="fill: none; stroke: var(--fg2); stroke-width: 1.4"></path></svg>
+</a>
+</sc-for>
+</nav>
+</div>
+<div class="oneline" style="padding-top: 24px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; color: var(--fg2)">{{ui.footer}}</div>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"motion":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":2300}}'>
+const PAL_D = { rose: '#E8838F', teal: '#3FB8A8', sand: '#D9B58A', mist: '#9FE3D6', clay: '#C8735A', dusk: '#9A8C93' };
+const PAL_L = { rose: '#C24A5C', teal: '#1F7A6E', sand: '#A87830', mist: '#3E7FA0', clay: '#B4573C', dusk: '#7A6870' };
+const THEMES = {
+  dark: '--bg:#140A0E;--fg:#F2ECE4;--fg2:#C9BCB8;--mut:#9A8C93;--line:rgba(242,236,228,0.09);--line2:rgba(242,236,228,0.22);--shell:rgba(242,236,228,0.045);--glass:rgba(20,10,14,0.9);--accent:#E8838F;--accentInk:#140A0E;--mint:#9FE3D6;--blob1:rgba(122,35,53,0.55);--blob2:rgba(63,184,168,0.22);--heroBg:radial-gradient(120% 80% at 30% 100%, #4A1726 0%, #241018 45%, #120A10 100%);--vizBg:radial-gradient(100% 70% at 50% 40%, #22121A 0%, #170C11 70%);--alt:#F2ECE4;--altInk:#1E1117;--altMut:#5E4A4F;--altAccent:#7A2335;--altLine:rgba(30,17,23,0.14);--altBorder:transparent;--footShade:rgba(0,0,0,0.22)',
+  light: '--bg:#F4EFE8;--fg:#1E1117;--fg2:#4A3A40;--mut:#76666C;--line:rgba(30,17,23,0.1);--line2:rgba(30,17,23,0.24);--shell:rgba(30,17,23,0.035);--glass:rgba(251,248,243,0.95);--accent:#B5384F;--accentInk:#FFF8F4;--mint:#1B7065;--blob1:rgba(181,56,79,0.16);--blob2:rgba(31,122,110,0.14);--heroBg:radial-gradient(120% 80% at 30% 100%, #EBD9CF 0%, #F5ECE4 50%, #FBF8F3 100%);--vizBg:radial-gradient(100% 70% at 50% 40%, #FDFBF8 0%, #F3ECE4 75%);--alt:#FBF8F3;--altInk:#1E1117;--altMut:#5E4A4F;--altAccent:#B5384F;--altLine:rgba(30,17,23,0.14);--altBorder:rgba(30,17,23,0.16);--footShade:rgba(30,17,23,0.10)'
+};
+const SHAPES = {
+  bipolar: { c: [[250, 300], [560, 270], [405, 135]], s: [0.42, 0.4, 0.18], sp: [80, 76, 40], b: 7 },
+  constellation: { c: [[170, 175], [370, 115], [610, 165], [225, 405], [470, 330], [650, 440]], s: [0.2, 0.16, 0.18, 0.16, 0.16, 0.14], sp: [46, 40, 44, 42, 40, 38], b: 11 },
+  hub: { c: [[235, 265], [530, 190], [500, 430]], s: [0.4, 0.34, 0.26], sp: [92, 80, 70], b: 5, star: true },
+  ring: { c: [[400, 285], [210, 165], [595, 160], [610, 415], [200, 420]], s: [0.24, 0.2, 0.2, 0.18, 0.18], sp: [52, 54, 54, 52, 52], b: 15 },
+  quad: { c: [[200, 205], [595, 195], [215, 420], [585, 420], [400, 312]], s: [0.23, 0.22, 0.22, 0.21, 0.12], sp: [46, 44, 44, 42, 24], b: 12 },
+  tri: { c: [[400, 305], [195, 205], [615, 205], [420, 430]], s: [0.16, 0.3, 0.28, 0.26], sp: [28, 52, 50, 44], b: 18, center: true }
+};
+const SCOPES = [
+  { id: 'between', label: 'Between countries', hint: 'Two places, one conversation', g: 0 },
+  { id: 'within', label: 'Within a country', hint: 'One country’s own debates', g: -1 },
+  { id: 'regional', label: 'Regional topics', hint: 'A topic across the region', g: 1 },
+  { id: 'platform', label: 'Platforms', hint: 'How each platform spreads it', g: 2 }
+];
+const TOPICS = [
+  { g: 0, label: 'Saudi Arabia ⇄ Qatar', shape: 'bipolar', comms: [['Saudi accounts', 'rose'], ['Qatari accounts', 'teal'], ['Regional news outlets', 'sand']], q: 'How do Saudi and Qatari accounts talk about each other?', read: 'Two dense clouds joined by a handful of bright threads: most of the conversation happens on each side, and only a few accounts carry it across.' },
+  { g: 0, label: 'Egypt ⇄ Sudan', shape: 'bipolar', comms: [['Egyptian accounts', 'rose'], ['Sudanese accounts', 'teal'], ['Diaspora voices', 'sand']], q: 'What do Egyptian accounts say about Sudan, and who answers?', read: 'Watch the small sand cloud in the middle: diaspora accounts often sit between the two sides and pass posts in both directions.' },
+  { g: 0, label: 'Morocco ⇄ Algeria', shape: 'bipolar', comms: [['Moroccan accounts', 'rose'], ['Algerian accounts', 'teal'], ['Shared football talk', 'sand']], q: 'Where do Moroccan and Algerian conversations meet?', read: 'The sand cloud is shared ground. When it grows week to week, the two sides are talking about the same thing at the same time.' },
+  { g: 0, label: 'Lebanon ⇄ Syria', shape: 'ring', comms: [['Humanitarian organisations', 'mist'], ['Lebanese politics', 'rose'], ['Syrian accounts', 'teal'], ['Local news', 'sand'], ['Diaspora', 'clay']], q: 'Who shapes Lebanon’s online debate about Syria?', read: 'A ring with a busy centre: humanitarian accounts in the middle link communities that rarely link to each other directly.' },
+  { g: 1, label: 'Football', shape: 'constellation', comms: [['Gulf league fans', 'rose'], ['Egyptian league fans', 'teal'], ['Maghreb fans', 'sand'], ['National-team talk', 'mist'], ['Sports media', 'clay'], ['Betting and spam', 'dusk']], q: 'How does football talk move across the region?', read: 'Many small clusters, loosely tied: fan bases mostly talk among themselves until a national-team match pulls them together.' },
+  { g: 1, label: 'Cost of living', shape: 'constellation', comms: [['Fuel prices', 'rose'], ['Rent and housing', 'teal'], ['Wages', 'sand'], ['Currency', 'mist'], ['Official accounts', 'clay'], ['Satire and memes', 'dusk']], q: 'Which parts of the cost-of-living conversation connect across the region?', read: 'Satire often acts as the glue: the dusk cluster links topics that official accounts discuss separately.' },
+  { g: 1, label: 'Heat and climate', shape: 'ring', comms: [['Weather services', 'mist'], ['Gulf residents', 'rose'], ['Agriculture', 'sand'], ['Activists', 'teal'], ['News media', 'clay']], q: 'Who talks about extreme heat, and who listens?', read: 'Weather services sit at the centre. Compare how many threads reach them from residents and from activists.' },
+  { g: 1, label: 'Elections', shape: 'hub', comms: [['Candidates and parties', 'rose'], ['Supporters', 'teal'], ['Monitors and journalists', 'sand']], q: 'How do campaigns, supporters and monitors connect online?', read: 'Star shapes mean broadcast: a few large accounts post, and many smaller ones only amplify.' },
+  { g: 2, label: 'X', shape: 'hub', comms: [['Media outlets', 'sand'], ['Commentators', 'rose'], ['Everyday users', 'teal']], q: 'Who sets the agenda on X?', read: 'Big hubs with long spokes: media outlets and commentators sit at the centre of most cascades.' },
+  { g: 2, label: 'Reddit', shape: 'constellation', comms: [['Country subreddits', 'rose'], ['Diaspora threads', 'sand'], ['Football fans', 'teal'], ['News discussion', 'mist'], ['Memes', 'clay'], ['Ask-me-anything', 'dusk']], q: 'How do discussions travel between Arab subreddits?', read: 'Loose clusters with many cross-links: a thread started in one community is often reposted to others within hours.' },
+  { g: 2, label: 'Telegram', shape: 'hub', comms: [['Channels', 'rose'], ['Forwarding groups', 'sand'], ['Readers', 'teal']], q: 'How does content spread through Telegram channels?', read: 'Chains rather than clouds: posts move from channel to group to group, so long thin paths matter more than big hubs.' }
+];
+const COUNTRIES = ['Egypt', 'Saudi Arabia', 'Qatar', 'Jordan', 'Lebanon', 'Morocco', 'Iraq', 'Tunisia'];
+const INNER = [
+  { label: 'Cost of living', shape: 'constellation', comms: [['Prices and shops', 'rose'], ['Fuel and transport', 'sand'], ['Rent', 'teal'], ['Salaries', 'mist'], ['Official accounts', 'clay'], ['Satire and memes', 'dusk']], q: 'What drives the cost-of-living conversation inside {c}?', read: 'Look for the clusters that never touch official accounts: those are the complaints that stay among residents.' },
+  { label: 'Jobs and work', shape: 'hub', comms: [['Employers and recruiters', 'sand'], ['Job seekers', 'rose'], ['Ministries and officials', 'teal']], q: 'Who talks about jobs in {c}, and who replies?', read: 'Recruiters broadcast from big hubs. Bridges between job seekers and officials show where questions actually get answered.' },
+  { label: 'Water and heat', shape: 'ring', comms: [['Utilities', 'mist'], ['Residents', 'rose'], ['Farmers', 'sand'], ['Weather services', 'teal'], ['Local news', 'clay']], q: 'How do people in {c} talk about water and heat?', read: 'Utilities sit in the middle. A thinning set of threads to residents can mean announcements are not reaching people.' },
+  { label: 'Football', shape: 'ring', comms: [['National team', 'mist'], ['Home-league fans', 'rose'], ['Rival club fans', 'teal'], ['Sports media', 'sand'], ['Pundits', 'clay']], q: 'How does football talk move inside {c}?', read: 'Rival fan bases rarely link directly; the national team in the centre is where they meet.' },
+  { label: 'Public services', shape: 'bipolar', comms: [['Residents', 'rose'], ['Officials', 'teal'], ['Local news', 'sand']], q: 'How do residents and officials in {c} talk about public services?', read: 'Two clouds again: residents on one side, officials on the other. Local news in the middle often carries complaints across.' }
+];
+const PRINCIPLES = [
+  { n: '01', t: 'Collect', d: 'Posts, replies and shares are gathered straight from each platform, in the words their authors wrote, across X, Reddit, YouTube, Instagram, Telegram and Facebook.' },
+  { n: '02', t: 'Curate', d: 'Spam, bots and duplicates are filtered out, and every post is tagged by country, topic and community, in Arabic first, with English alongside.' },
+  { n: '03', t: 'Analyze', d: 'Network and content analysis run together: who connects to whom, and what they are saying, week by week.' },
+  { n: '04', t: 'Impact', d: 'Findings become open stories and briefs for researchers, journalists and policymakers, with the sample and caveats beside every chart.' }
+];
+
+const AR = {"Across the Gulf": "عبر الخليج", "Four accounts nobody expected are leading the Gulf’s summer-heat conversation": "أربعة حسابات لم يتوقعها أحد تقود نقاش حرّ الصيف في الخليج", "Network": "شبكة", "A football fan page": "صفحة مشجّعي كرة قدم", "#1 · 41,200 reposts": "#1 · 41,200 إعادة نشر", "A car-meet account": "حساب لتجمّعات السيارات", "#2 · 33,800 reposts": "#2 · 33,800 إعادة نشر", "A home-cooking channel": "قناة طبخ منزلي", "#3 · 29,100 reposts": "#3 · 29,100 إعادة نشر", "A Nabati poetry account": "حساب للشعر النبطي", "#4 · 24,600 reposts": "#4 · 24,600 إعادة نشر", "Official accounts": "الحسابات الرسمية", "#11 · 6,300 reposts": "#11 · 6,300 إعادة نشر", "Modularity Q = 0.47": "معامل النمطية Q = 0.47", "Modularity Q = 0.41": "معامل النمطية Q = 0.41", "Modularity Q = 0.62": "معامل النمطية Q = 0.62", "n = 11,604 accounts · 52,118 ties": "العيّنة: 11,604 حساباً · 52,118 رابطاً", "n = 13,282 accounts · 58,940 ties": "العيّنة: 13,282 حساباً · 58,940 رابطاً", "Bridge tie": "رابط جسري", "Within-group tie": "رابط داخل المجموعة", "Node size = degree": "حجم العقدة = الدرجة", "The four co-repost": "الأربعة يعيدون نشر بعضهم", "38% of heat reposts": "38% من إعادات النشر عن الحر", "Across the region": "عبر المنطقة", "Mobile data caps: unexpected complaints, where they start and where they spread": "حدود باقات بيانات الجوال: شكاوى غير متوقعة، من أين تبدأ وإلى أين تنتشر", "Origin–destination flow": "تدفّق من المصدر إلى الوجهة", "Hour of complaint": "ساعة الشكوى", "Hour of post": "ساعة النشر", "Origin": "المصدر", "Destination": "الوجهة", "Complaints out": "شكاوى صادرة", "Complaints in": "شكاوى واردة", "Outbound reposts": "إعادات نشر صادرة", "Inbound reposts": "إعادات نشر واردة", "Region": "المنطقة", "Gulf": "الخليج", "Levant & Iraq": "الشام والعراق", "Nile Valley": "وادي النيل", "Maghreb": "المغرب العربي", "low": "منخفض", "high": "مرتفع", "Share by hour": "الحصة حسب الساعة", "n = 18,240 posts": "18,240 منشوراً", "Aug–Sep 2026": "أغسطس–سبتمبر 2026", "EG → JO, the busiest route": "مصر ← الأردن، المسار الأنشط", "gamers to students, 22.6%": "من اللاعبين إلى الطلاب، 22.6%", "Each city’s topic mix, and the links between them": "مزيج المواضيع في كل مدينة، والروابط بينها", "Glyph map": "خريطة رموز", "Rabat": "الرباط", "Tunis": "تونس", "Cairo": "القاهرة", "Beirut": "بيروت", "Baghdad": "بغداد", "Riyadh": "الرياض", "Doha": "الدوحة", "Khartoum": "الخرطوم", "Algiers": "الجزائر", "Petal length = share of city’s posts": "طول البتلة = حصة منشورات المدينة", "Gulf league fans": "مشجّعو الدوري الخليجي", "Egyptian league fans": "مشجّعو الدوري المصري", "Maghreb fans": "مشجّعو المغرب العربي", "National-team talk": "نقاش المنتخبات", "Sports media": "الإعلام الرياضي", "Betting and spam": "المراهنات والرسائل المزعجة", "Arc width = co-mentions": "عرض القوس = الإشارات المشتركة", "Centre dot = volume · n = 96,402": "النقطة المركزية = الحجم · العيّنة: 96,402", "Sports media leads in Doha": "الإعلام الرياضي يتصدّر في الدوحة", "31% of the city’s football posts": "31% من منشورات كرة القدم في المدينة", "Inside Lebanon": "داخل لبنان", "One day of Lebanese posting, hour by hour": "يوم من النشر في لبنان، ساعة بساعة", "Radial area chart": "مخطط مساحي دائري", "Hour of day (UTC+3)": "ساعة اليوم (UTC+3)", "n = 58,917 posts": "58,917 منشوراً", "14 Sep 2026": "14 سبتمبر 2026", "3,140 posts/h": "3,140 منشوراً/ساعة", "1,870 posts/h": "1,870 منشوراً/ساعة", "1,120 posts/h": "1,120 منشوراً/ساعة", "Prices and shops": "الأسعار والمتاجر", "Fuel and transport": "الوقود والنقل", "Rent": "الإيجار", "Salaries": "الرواتب", "Satire and memes": "السخرية والميمز", "Platforms": "المنصات", "Platform": "منصة", "Who sets the agenda on X, and who only amplifies": "من يضع الأجندة على X، ومن يكتفي بالتضخيم", "Media outlets": "وسائل الإعلام", "318 outlets": "318 وسيلة", "Commentators": "المعلّقون", "1,204 commentators": "1,204 معلّقاً", "Everyday users": "المستخدمون العاديون", "11,760 users": "11,760 مستخدماً", "96 relays": "96 حساباً وسيطاً", "58% of replies": "58% من الردود", "Which themes move together, and which platforms drive them": "أي المواضيع تتحرك معاً، وأي المنصات تحرّكها", "Correlation matrix": "مصفوفة ارتباط", "Prices": "الأسعار", "Fuel": "الوقود", "Wages": "الأجور", "Jobs": "الوظائف", "Water": "المياه", "Heat": "الحر", "Football": "كرة القدم", "Memes": "الميمز", "Reddit": "ريديت", "Telegram": "تيليغرام", "Facebook": "فيسبوك", "YouTube": "يوتيوب", "Instagram": "إنستغرام", "LinkedIn": "لينكدإن", "Email": "البريد الإلكتروني", "Pearson’s r": "معامل بيرسون r", "Mantel’s r": "معامل مانتل r", "Mantel’s p": "قيمة p لمانتل", "n = 487,210 posts · 9 themes × 3 platforms · Jan–Sep 2026": "العيّنة: 487,210 منشوراً · 9 مواضيع × 3 منصات · يناير–سبتمبر 2026", "Inside Jordan": "داخل الأردن", "Who posts about water, how they frame it, and where it travels": "من ينشر عن المياه، وكيف يؤطّرها، وإلى أين تنتقل", "Alluvial flow": "مخطط تدفّق", "Utilities": "شركات المرافق", "Residents": "السكان", "Farmers": "المزارعون", "Weather services": "خدمات الطقس", "Local news": "الأخبار المحلية", "Who posts": "من ينشر", "Shortage": "الشحّ", "Blame": "اللوم", "Fixes": "الحلول", "How it is framed": "كيف يُؤطَّر", "News sites": "المواقع الإخبارية", "Where it travels": "إلى أين ينتقل", "→": "←", "Blame → X": "اللوم ← X", "largest flow": "أكبر تدفّق", "Band width = posts · n = 23,518 posts, Jun–Aug 2026": "عرض الشريط = المنشورات · العيّنة: 23,518، يونيو–أغسطس 2026", "How sixteen Telegram channels funnel into one headline": "كيف تصبّ ست عشرة قناة على تيليغرام في عنوان واحد", "Funnel Sankey": "مخطط سانكي قمعي", "Channels": "القنوات", "Groups": "المجموعات", "Amplifiers": "المضخّمون", "Aggregators": "المجمّعون", "Headline": "العنوان", "News outlet": "وسيلة إخبارية", "4,271 forwards": "4,271 إعادة توجيه", "Narratives merge": "السرديات تندمج", "at the amplifier stage": "في مرحلة المضخّمين", "Band width = forwarded posts · n = 18,906 forwards": "عرض الشريط = المنشورات المعاد توجيهها · العيّنة: 18,906", "Saudi Arabia ⇄ Qatar": "السعودية ⇄ قطر", "Egypt ⇄ Sudan": "مصر ⇄ السودان", "Morocco ⇄ Algeria": "المغرب ⇄ الجزائر", "Lebanon ⇄ Syria": "لبنان ⇄ سوريا", "Cost of living": "غلاء المعيشة", "Heat and climate": "الحر والمناخ", "Elections": "الانتخابات", "Inside Egypt · Cost of living": "داخل مصر · غلاء المعيشة", "Inside Jordan · Water and heat": "داخل الأردن · المياه والحر", "Inside Morocco · Football": "داخل المغرب · كرة القدم", "Inside Iraq · Jobs and work": "داخل العراق · الوظائف والعمل", "Between countries": "بين الدول", "Inside Egypt": "داخل مصر", "How Saudi and Qatari accounts talk about each other": "كيف تتحدث الحسابات السعودية والقطرية عن بعضها", "Prices, rent and memes: the cost-of-living debate": "الأسعار والإيجارات والميمز: نقاش غلاء المعيشة", "Football talk, from club rivalries to the national team": "حديث كرة القدم، من تنافس الأندية إلى المنتخب"};
+const UI = { en: {"stories": "Stories", "built": "How it’s built", "about": "About", "langBtn": "عربي", "brief": "Get the weekly brief", "badge": "Observatory for Social Media in the Arab Region", "h1a": "See how the region’s conversations ", "h1b": "connect.", "h1c": "", "heroP": "Compare two countries, zoom into one country’s debates, or follow a topic across the region.", "read": "Read the stories", "featured": "Featured", "said": "What is said", "connects": "Who connects", "look": "Look into it", "tracking": "Tracking", "storiesH": "Across borders, and close to home.", "storiesP": "Each story pairs one chart with a short reading of what it shows and how it was measured.", "sample": "Sample story", "builtH": "From raw posts to readable findings.", "builtP": "WAST reverse engineers social media platforms to extract content as directly reflected and authored by social media contributors concerned with Arab causes.", "footer": "Watching Arab Social Tractions, a social media observatory from the Doha Institute for Graduate Studies and the Arab Center for Research and Policy Studies.", "prev": "Previous stories", "next": "Next stories"}, ar: {"stories": "القصص", "built": "كيف بُني", "about": "عن المرصد", "langBtn": "English", "brief": "اشترك في النشرة الأسبوعية", "badge": "مرصد وسائل التواصل الاجتماعي في المنطقة العربية", "h1a": "شاهد كيف ", "h1b": "تتّصل", "h1c": " نقاشات المنطقة.", "heroP": "قارن بين بلدين، أو تعمّق في نقاشات بلد واحد، أو تتبّع موضوعاً عبر المنطقة.", "read": "اقرأ القصص", "featured": "مختارات", "said": "ما يُقال", "connects": "من يتواصل", "look": "اكتشف القصة", "tracking": "نتابع", "storiesH": "عبر الحدود، وقريباً من الوطن.", "storiesP": "تجمع كل قصة بين رسم بياني واحد وقراءة موجزة لما يُظهره وكيف قيس.", "sample": "قصة نموذجية", "builtH": "من المنشورات الخام إلى نتائج مقروءة.", "builtP": "يقوم «وسط» بالهندسة العكسية لمنصات التواصل الاجتماعي لاستخراج المحتوى كما يعكسه ويكتبه مباشرةً المساهمون المهتمون بالقضايا العربية.", "footer": "«وسط»، رصد التفاعلات الاجتماعية العربية: مرصد لوسائل التواصل الاجتماعي من معهد الدوحة للدراسات العليا والمركز العربي للأبحاث ودراسة السياسات.", "prev": "القصص السابقة", "next": "القصص التالية"} };
+const PRINCIPLES_AR = [{"n": "01", "t": "الجمع", "d": "تُجمع المنشورات والردود والمشاركات مباشرةً من كل منصة، بالكلمات التي كتبها أصحابها، عبر X وريديت ويوتيوب وإنستغرام وتيليغرام وفيسبوك."}, {"n": "02", "t": "التنقيح", "d": "تُستبعد الرسائل المزعجة والحسابات الآلية والمنشورات المكررة، ويُصنَّف كل منشور حسب البلد والموضوع والمجتمع، بالعربية أولاً والإنجليزية إلى جانبها."}, {"n": "03", "t": "التحليل", "d": "يعمل تحليل الشبكات وتحليل المحتوى معاً: من يتصل بمن، وماذا يقولون، أسبوعاً بعد أسبوع."}, {"n": "04", "t": "الأثر", "d": "تتحول النتائج إلى قصص وموجزات مفتوحة للباحثين والصحفيين وصانعي السياسات، مع العيّنة والتحفظات إلى جانب كل رسم بياني."}];
+const FLAGS = {
+  sa: { name: 'Saudi Arabia', src: 'blob-fe7199abdafa81c21206a6a935239643.svg' }, qa: { name: 'Qatar', src: 'blob-6024286b7d9f7f034d1e2f93fe4f5277.svg' },
+  eg: { name: 'Egypt', src: 'blob-6e041a257e796b8898b928ba5fdef55e.svg' }, ma: { name: 'Morocco', src: 'blob-1d91fad7701626cef9d6fe49b6d3af4c.svg' },
+  dz: { name: 'Algeria', src: 'blob-20c3d54e0e4801230f07589f7ef467f7.svg' }, lb: { name: 'Lebanon', src: 'blob-1263c6ea404005d5baa0e13d3040b027.svg' },
+  sy: { name: 'Syria', src: 'blob-eeb0dc0ad100b6c5eb004a7c666e4613.svg' }, jo: { name: 'Jordan', src: 'blob-677ea3468bcf12afa2f4a65339e3b723.svg' }
+};
+const flagList = (codes) => (codes || []).map((c) => FLAGS[c]);
+const LAND = '2-43,45-48|1-43|1-42,44-45|1-41,44-48|1-40,44-49|1-40,43-51|1-39,42-53|1-38,41-53|1-38,41-54|1-37,41-54|2-37,40-49,52-52|3-36,39-49,54-56|3-36,38-47,51-56|5-35,37-46,49-56|6-56|6-23,27-30,38-56|7-20,38-56|8-19,38-56|13-20,39-56|7-11,19-19,23-23,28-28,33-56|6-12,24-24,28-29,31-56|7-12,19-19,24-24,27-28,32-56';
+const CITIES = { Rabat: [-6.8, 34.0, 0.65], Algiers: [3.06, 36.75, 0.6], Tunis: [10.18, 36.8, 0.45], Tripoli: [13.19, 32.89, 0.3], Cairo: [31.24, 30.04, 1], Khartoum: [32.56, 15.5, 0.35], Beirut: [35.5, 33.89, 0.6], Damascus: [36.29, 33.51, 0.45], Amman: [35.93, 31.95, 0.5], Baghdad: [44.36, 33.31, 0.55], Riyadh: [46.72, 24.71, 0.95], Kuwait: [47.98, 29.37, 0.5], Doha: [51.53, 25.29, 0.75], 'Abu Dhabi': [54.37, 24.45, 0.6], Muscat: [58.41, 23.59, 0.3], 'Sana’a': [44.19, 15.37, 0.3] };
+const HERO = [
+  { sc: 'between', t: 0, flags: ['sa', 'qa'], kicker: 'Between countries', title: 'How Saudi and Qatari accounts talk about each other' },
+  { sc: 'within', cty: 0, it: 0, flags: ['eg'], kicker: 'Inside Egypt', title: 'Prices, rent and memes: the cost-of-living debate' },
+  { sc: 'regional', t: 4, flags: [], kicker: 'Across the region', title: 'Football talk, from club rivalries to the national team' }
+];
+const SOCIALS = [
+  { name: 'Email', icon: 'M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1.4 2L12 12.2 19.6 7H4.4zM20 8.6l-7.43 5.1a1 1 0 0 1-1.14 0L4 8.6V17h16V8.6z' },
+  { name: 'X', icon: 'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z' },
+  { name: 'LinkedIn', icon: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z' },
+  { name: 'Instagram', icon: 'M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077' },
+  { name: 'YouTube', icon: 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z' }
+];
+
+const PREFS_KEY = 'wast-carry';
+const readCarry = () => { try { const c = JSON.parse(window.localStorage.getItem(PREFS_KEY) || 'null'); return c && Date.now() - c.t < 6000 ? c : null; } catch (e) { return null; } };
+const writeCarry = (th, lang) => { try { window.localStorage.setItem(PREFS_KEY, JSON.stringify({ th, lang, t: Date.now() })); window.dispatchEvent(new Event(PREFS_KEY)); } catch (e) {} };
+class Component extends DCLogic {
+  componentDidMount() {
+    this.startCycle();
+    const apply = () => { const c = readCarry(); if (c) this.setState({ th: c.th, lang: c.lang }); };
+    apply();
+    this._onStore = (e) => { if (!e || !e.key || e.key === PREFS_KEY) apply(); };
+    try { window.addEventListener('storage', this._onStore); window.addEventListener(PREFS_KEY, this._onStore); } catch (e) {}
+  }
+  componentWillUnmount() {
+    if (this._timer) clearInterval(this._timer);
+    try { window.removeEventListener('storage', this._onStore); window.removeEventListener(PREFS_KEY, this._onStore); } catch (e) {}
+  }
+  startCycle() {
+    if (this._timer) clearInterval(this._timer);
+    this._timer = null;
+    if (!(this.props.motion ?? true)) return;
+    this._timer = setInterval(() => {
+      const h = (this.state || {}).hero ?? 0;
+      this.setState({ hero: (h + 1) % HERO.length });
+    }, 7000);
+  }
+  scrollStories(e, dir) {
+    const btn = e && e.currentTarget;
+    const st = btn && btn.parentNode ? btn.parentNode.querySelector('.strip') : document.querySelector('.strip');
+    const rtl = ((this.state || {}).lang ?? 'en') === 'ar';
+    if (st) st.scrollBy({ left: (rtl ? -dir : dir) * Math.max(280, st.clientWidth * 0.75), behavior: 'smooth' });
+  }
+  heroGraph(h) {
+    if (h.sc === 'within') {
+      const I = INNER[h.it];
+      return this.net({ label: '', shape: I.shape, comms: I.comms }, 'in' + h.cty + '-' + h.it, 500 + h.cty * 41 + h.it * 7, 4);
+    }
+    return this.net(TOPICS[h.t], 't' + h.t, 1009 + h.t * 97, 4);
+  }
+  viz(s, comms, gg, look) {
+    const P = PAL_D;
+    const ink = '#F2ECE4';
+    const ink2 = '#CDBFBA';
+    const out = { paths: [], rects: [], circles: [], texts: [] };
+    let seed = 97 + s.w * 3 + (s.t || 0) * 11 + (s.it || 0) * 5 + (s.cty || 0) * 13;
+    const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const col = (i) => P[comms[i % comms.length][1]];
+    const f1 = (v) => (+v).toFixed(1);
+    const zoom = Math.max(s.w / 800, 260 / 560);
+    const V = { x0: 400 - s.w / zoom / 2, x1: 400 + s.w / zoom / 2, y0: 280 - 130 / zoom, y1: 280 + 130 / zoom };
+    const offX = (800 * zoom - s.w) / 2;
+    const offY = (560 * zoom - 260) / 2;
+    const txt = (x, y, t, o) => {
+      t = this._tr ? this._tr(t) : t;
+      const q = Object.assign({ fill: ink, size: 12, anchor: 'start', weight: 600 }, o || {});
+      const fs = Math.max(8.5, q.size * 1.6 * zoom);
+      const left = x * zoom - offX;
+      const top = y * zoom - offY - fs * 0.8;
+      const lightText = q.fill !== '#140A0E';
+      const halo = lightText ? 'rgba(20,10,14,0.92)' : 'rgba(242,236,228,0.7)';
+      const shadow = '0 0 1px ' + halo + ', 0 0 2px ' + halo + ', 0 0 3px ' + halo + ', 0 0 5px ' + halo;
+      const tx = q.anchor === 'middle' ? '-50%' : (q.anchor === 'end' ? '-100%' : '0');
+      out.texts.push({
+        t, x: left, y: top + fs * 0.8, fs, fill: q.fill, anchor: q.anchor,
+        css: 'position: absolute; left: ' + left.toFixed(1) + 'px; top: ' + top.toFixed(1) + 'px; transform: translateX(' + tx + '); font-family: var(--ff); font-size: ' + fs.toFixed(1) + 'px; font-weight: ' + Math.max(600, q.weight) + '; line-height: 1; letter-spacing: -0.005em; white-space: nowrap; color: ' + q.fill + '; text-shadow: ' + shadow + '; pointer-events: none'
+      });
+    };
+    const path = (d, o) => out.paths.push(Object.assign({ d, fill: 'none', stroke: ink, w: 2, op: 1, cls: '', dl: '0s' }, o || {}));
+    const dot = (x, y, r, o) => out.circles.push(Object.assign({ x: f1(x), y: f1(y), r: f1(r), fill: ink, op: 1, stroke: 'none', sw: 0, cls: '', dl: '0s', du: '6s' }, o || {}));
+    const rect = (x, y, w, h, fill, op, o) => out.rects.push(Object.assign({ x: f1(x), y: f1(y), w: f1(Math.max(0, w)), h: f1(Math.max(0, h)), rx: 0, fill, op, cls: '', dl: '0s' }, o || {}));
+    const line = (x1, y1, x2, y2, o) => path('M' + f1(x1) + ' ' + f1(y1) + ' L' + f1(x2) + ' ' + f1(y2), Object.assign({ stroke: ink, w: 1, op: 0.4 }, o || {}));
+    const tick = (x, y, t, o) => txt(x, y, t, Object.assign({ size: 11, fill: ink2, anchor: 'middle' }, o || {}));
+    const head = (x, y, t, o) => txt(x, y, t, Object.assign({ size: 12, anchor: 'middle' }, o || {}));
+    const note = (x, y, t, anchor) => txt(x, y, t, { size: 10.5, fill: ink2, anchor: anchor || 'end' });
+    const cw = (size) => size * 1.45 * 0.56;
+    const legend = (x, y, items, o) => {
+      o = Object.assign({ dir: 'v', gap: 24, size: 11, colGap: 22 }, o || {});
+      let cx = x;
+      let cy = y;
+      items.forEach((it) => {
+        if (it[2] === 'line') line(cx, cy - 6, cx + 20, cy - 6, { stroke: it[1], w: it[3] || 4, op: it[4] || 1 });
+        else if (it[2] === 'dot') dot(cx + 9, cy - 6, it[3] || 6, { fill: it[1] });
+        else rect(cx, cy - 14, 18, 12, it[1], 1, { rx: 2 });
+        txt(cx + 26, cy, it[0], { size: o.size, fill: o.fill || ink });
+        if (o.dir === 'v') cy += o.gap;
+        else cx += 26 + it[0].length * cw(o.size) + o.colGap;
+      });
+    };
+    const cbar = (x, y, w, h, fn, lo, hi, title) => {
+      const n = 10;
+      for (let i = 0; i < n; i++) { const q = fn(i / (n - 1)); rect(x + (i * w) / n, y, w / n + 0.6, h, q[0], q[1]); }
+      tick(x, y + h + 19, lo, { anchor: 'start' });
+      tick(x + w, y + h + 19, hi, { anchor: 'end' });
+      if (title) txt(x, y - 9, title, { size: 10.5, fill: ink2 });
+    };
+    const callout = (x, y, tx, ty, label, anchor, sub) => {
+      const end = anchor === 'end';
+      path('M' + f1(x) + ' ' + f1(y) + ' L' + f1(tx) + ' ' + f1(ty) + ' l' + (end ? -12 : 12) + ' 0', { stroke: ink, w: 1.3, op: 0.8 });
+      dot(x, y, 4.5, { fill: ink });
+      dot(x, y, 10, { fill: 'none', stroke: ink, sw: 1.2, op: 0.7 });
+      const lx = tx + (end ? -18 : 18);
+      txt(lx, ty + 6, label, { size: 12.5, anchor: end ? 'end' : 'start' });
+      if (sub) txt(lx, ty + 28, sub, { size: 10.5, fill: ink2, anchor: end ? 'end' : 'start' });
+    };
+    const seg = (pts) => {
+      let d = '';
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[Math.max(0, i - 1)];
+        const p1 = pts[i];
+        const p2 = pts[i + 1];
+        const p3 = pts[Math.min(pts.length - 1, i + 2)];
+        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+        d += ' C' + f1(c1[0]) + ' ' + f1(c1[1]) + ' ' + f1(c2[0]) + ' ' + f1(c2[1]) + ' ' + f1(p2[0]) + ' ' + f1(p2[1]);
+      }
+      return d;
+    };
+    const smooth = (pts) => 'M' + f1(pts[0][0]) + ' ' + f1(pts[0][1]) + seg(pts);
+    const sector = (cx, cy, r0, r1, a0, a1) => {
+      const p = (r, a) => f1(cx + r * Math.cos(a)) + ' ' + f1(cy + r * Math.sin(a));
+      const lg = a1 - a0 > Math.PI ? 1 : 0;
+      return 'M' + p(r0, a0) + ' L' + p(r1, a0) + ' A' + r1 + ' ' + r1 + ' 0 ' + lg + ' 1 ' + p(r1, a1) + ' L' + p(r0, a1) + ' A' + r0 + ' ' + r0 + ' 0 ' + lg + ' 0 ' + p(r0, a0) + ' Z';
+    };
+    const circle = (cx, cy, r, o) => path('M' + f1(cx + r) + ' ' + f1(cy) + ' A' + r + ' ' + r + ' 0 1 1 ' + f1(cx - r) + ' ' + f1(cy) + ' A' + r + ' ' + r + ' 0 1 1 ' + f1(cx + r) + ' ' + f1(cy), Object.assign({ stroke: ink, w: 1, op: 0.2 }, o || {}));
+    const ribbon = (xa, a0, a1, xb, b0, b1, fill, op) => {
+      const mx = (xa + xb) / 2;
+      path('M' + f1(xa) + ' ' + f1(a0) + ' C' + f1(mx) + ' ' + f1(a0) + ' ' + f1(mx) + ' ' + f1(b0) + ' ' + f1(xb) + ' ' + f1(b0) + ' L' + f1(xb) + ' ' + f1(b1) + ' C' + f1(mx) + ' ' + f1(b1) + ' ' + f1(mx) + ' ' + f1(a1) + ' ' + f1(xa) + ' ' + f1(a1) + ' Z', { fill, stroke: 'none', w: 0, op });
+    };
+    const LANDPTS = () => {
+      const pts = [];
+      LAND.split('|').forEach((row, ri) => {
+        row.split(',').forEach((run) => {
+          if (!run) return;
+          const ab = run.split('-').map(Number);
+          for (let ci = ab[0]; ci <= ab[1]; ci++) pts.push([-17.4 + ci * 1.4, 10.6 + ri * 1.4]);
+        });
+      });
+      return pts;
+    };
+    const MX = (lon) => 60 + (lon + 18) * 8.5;
+    const MY = (lat) => 470 - (lat - 10) * 9.4;
+    const k = s.kind;
+
+    if (k === 'od') {
+      const codes = ['EG', 'SA', 'AE', 'QA', 'MA', 'JO', 'LB', 'IQ', 'KW', 'DZ', 'TN', 'OM'];
+      const REG = { EG: 2, SA: 0, AE: 0, QA: 0, KW: 0, OM: 0, MA: 3, DZ: 3, TN: 3, JO: 1, LB: 1, IQ: 1 };
+      const regs = [['Gulf', P.teal], ['Levant and Iraq', P.sand], ['Nile Valley', P.mist], ['Maghreb', P.rose]];
+      const n = codes.length;
+      const F = codes.map((a, i) => codes.map((b, j) => 0));
+      codes.forEach((a, i) => {
+        const m = 2 + Math.floor(R() * 2);
+        for (let q = 0; q < m; q++) {
+          let j = Math.floor(R() * n);
+          if (j === i) j = (j + 1) % n;
+          F[i][j] += (n - i) * (0.4 + R());
+        }
+      });
+      const OD = s.od || {};
+      const bigJ = OD.big || 1;
+      F[0][bigJ] += 14;
+      F[1][3] += 6;
+      F[4][9] += 5;
+      const outV = F.map((r) => r.reduce((a, b) => a + b, 0));
+      const inV = codes.map((c, j) => F.reduce((a, r) => a + r[j], 0));
+      const dOrder = codes.map((c, j) => j).sort((a, b) => inV[b] - inV[a]);
+      const dRow = [];
+      dOrder.forEach((j, r) => { dRow[j] = r; });
+      const y0 = 150;
+      const rh = 25;
+      const xl = 300;
+      const xr = 500;
+      const mxV = Math.max(Math.max.apply(null, outV), Math.max.apply(null, inV));
+      const u = 19 / mxV;
+      head(120, 136, OD.hour || 'Hour of post');
+      head(250, 136, 'Origin');
+      head(548, 136, 'Destination');
+      const offO = codes.map((c, i) => y0 + i * rh + (rh - outV[i] * u) / 2);
+      const offD = codes.map((c, j) => y0 + dRow[j] * rh + (rh - inV[j] * u) / 2);
+      let big = null;
+      codes.forEach((a, i) => codes.forEach((b, j) => {
+        const v = F[i][j];
+        if (!v) return;
+        const a0 = offO[i];
+        const b0 = offD[j];
+        offO[i] += v * u;
+        offD[j] += v * u;
+        ribbon(xl + 4, a0, offO[i], xr - 4, b0, offD[j], regs[REG[a]][1], i === 0 && j === bigJ ? 0.8 : 0.42);
+        if (i === 0 && j === bigJ) big = [(xl + xr) / 2, (a0 + offO[i] + b0 + offD[j]) / 4];
+      }));
+      codes.forEach((c, i) => {
+        const y = y0 + i * rh;
+        const L = 14 + (outV[i] / mxV) * 78;
+        rect(xl - L, y + 4, L, rh - 8, regs[REG[c]][1], 1, { rx: 2 });
+        txt(52, y + 18, c, { size: 11.5, anchor: 'end' });
+        for (let b = 0; b < 6; b++) {
+          const h = b * 4 + 2;
+          const v = Math.max(0, Math.min(1, 0.1 + 0.85 * Math.exp(-Math.pow((h - 21 + (i % 3) * 1.5) / 4.2, 2)) + 0.3 * Math.exp(-Math.pow((h - 13) / 3, 2)) + R() * 0.15));
+          rect(60 + b * 20, y + 2, 19, rh - 3, v > 0.72 ? P.rose : P.sand, 0.12 + v * 0.85);
+        }
+        const j = dOrder[i];
+        const Ld = 16 + (inV[j] / mxV) * 80;
+        rect(xr, y + 4, Ld, rh - 8, regs[REG[codes[j]]][1], 1, { rx: 2, cls: 'grow', dl: (i * 0.04).toFixed(2) + 's' });
+        txt(xr + Ld + 7, y + 18, codes[j], { size: 11.5 });
+      });
+      const ya = y0 + n * rh + 8;
+      line(60, ya, 180, ya);
+      [['00', 60], ['12', 120], ['24', 180]].forEach((t) => { line(t[1], ya, t[1], ya + 5); tick(t[1], ya + 22, t[0]); });
+      tick(120, ya + 44, 'UTC+3');
+      line(208, ya, 300, ya);
+      line(300, ya, 300, ya + 5);
+      tick(300, ya + 22, '0', { anchor: 'end' });
+      tick(208, ya + 22, OD.maxOut || '42k', { anchor: 'start' });
+      tick(254, ya + 44, OD.out || 'Outbound reposts');
+      line(500, ya, 596, ya);
+      line(500, ya, 500, ya + 5);
+      tick(500, ya + 22, '0', { anchor: 'start' });
+      tick(596, ya + 22, OD.maxIn || '38k', { anchor: 'end' });
+      tick(548, ya + 44, OD.in || 'Inbound reposts');
+      txt(648, 168, 'Region', { size: 10, fill: ink2 });
+      legend(648, 194, regs.map((r2) => [r2[0].replace(' and ', ' & '), r2[1]]), { size: 9.5, gap: 22 });
+      cbar(648, 310, 120, 10, (q) => [q > 0.7 ? P.rose : P.sand, 0.12 + q * 0.85], 'low', 'high', 'Share by hour');
+      note(648, 384, OD.n || 'n = 214k reposts', 'start');
+      note(648, 406, OD.when || 'Jun–Sep 2026', 'start');
+      if (big) callout(big[0], big[1], OD.tx || 392, 86, OD.co || 'EG → SA, the busiest corridor', 'start', OD.sub || '18.4% of all cross-border reposts');
+    }
+
+    if (k === 'glyph') {
+      LANDPTS().forEach((p) => dot(MX(p[0]), MY(p[1]), 2, { fill: ink, op: 0.1 }));
+      const hubs = [['Rabat', 0, 0], ['Tunis', 20, -45], ['Cairo', -58, 40], ['Beirut', -25, -80], ['Baghdad', 40, -78], ['Riyadh', -20, 68], ['Doha', 80, -26], ['Khartoum', -50, 26]].map((h) => {
+        const c = CITIES[h[0]];
+        const x = MX(c[0]);
+        const y = MY(c[1]);
+        return { nm: h[0], x, y, gx: x + h[1], gy: y + h[2] };
+      });
+      const H = (nm) => hubs.find((h) => h.nm === nm);
+      [['Rabat', 'Tunis', 3], ['Tunis', 'Cairo', 2], ['Cairo', 'Riyadh', 9], ['Cairo', 'Beirut', 4], ['Beirut', 'Baghdad', 3], ['Riyadh', 'Doha', 6], ['Baghdad', 'Doha', 2], ['Cairo', 'Khartoum', 4], ['Rabat', 'Cairo', 2]].forEach((e) => {
+        const a = H(e[0]);
+        const b = H(e[1]);
+        const dd = Math.hypot(b.x - a.x, b.y - a.y);
+        path('M' + f1(a.x) + ' ' + f1(a.y) + ' Q' + f1((a.x + b.x) / 2) + ' ' + f1((a.y + b.y) / 2 - dd * 0.3) + ' ' + f1(b.x) + ' ' + f1(b.y), { stroke: e[2] > 5 ? P.mist : ink, w: 1 + e[2] * 0.7, op: e[2] > 5 ? 0.85 : 0.35, cls: e[2] > 5 ? 'flow' : '' });
+      });
+      hubs.forEach((h) => {
+        if (h.gx !== h.x || h.gy !== h.y) line(h.x, h.y, h.gx, h.gy, { op: 0.5 });
+        dot(h.x, h.y, 3.5, { fill: ink });
+      });
+      let dohaTop = null;
+      hubs.forEach((h, hi) => {
+        const nseg = comms.length;
+        const span = (Math.PI * 2) / nseg;
+        let a0 = -Math.PI / 2 - span / 2;
+        for (let q = 0; q < nseg; q++) {
+          let len = 6 + R() * 18;
+          if (h.nm === 'Doha' && q === 4) len = 28;
+          path(sector(h.gx, h.gy, 15, 15 + len, a0 + 0.06, a0 + span - 0.06), { fill: col(q), stroke: 'none', w: 0, op: 0.95 });
+          if (h.nm === 'Doha' && q === 4) { const m = a0 + span / 2; dohaTop = [h.gx + (15 + len) * Math.cos(m), h.gy + (15 + len) * Math.sin(m)]; }
+          a0 += span;
+        }
+        dot(h.gx, h.gy, 12, { fill: '#140A0E', stroke: ink, sw: 1.5 });
+        dot(h.gx, h.gy, 2 + R() * 6, { fill: ink, op: 0.85 });
+        txt(h.gx, h.gy + 60, h.nm, { size: 11.5, anchor: 'middle' });
+      });
+      txt(40, 372, 'Petal length = share of city’s posts', { size: 10.5, fill: ink2 });
+      legend(40, 400, comms.map((c, i) => [c[0], col(i)]), { size: 10.5, gap: 22 });
+      note(790, 510, 'Arc width = co-mentions');
+      note(790, 532, 'Centre dot = volume · n = 96,402');
+      if (dohaTop) callout(dohaTop[0], dohaTop[1], 660, 82, 'Sports media leads in Doha', 'end', '31% of the city’s football posts');
+    }
+
+    if (k === 'roseArea') {
+      const cx = 400;
+      const cy = 300;
+      const N = 72;
+      const r0 = 22;
+      const RM = 148;
+      const lay = [0, 1, 2, 5];
+      const prof = [[20.5, 2.4, 13, 2.2], [8, 1.6, 18, 2], [21.5, 2.2, 15, 3], [22.5, 2.4, 12.5, 2]];
+      const dn = (x, c, w) => Math.exp(-Math.pow(Math.min(Math.abs(x - c), 24 - Math.abs(x - c)) / w, 2));
+      const V2 = lay.map((li, q) => Array.from({ length: N }, (_, i) => { const h = (i / N) * 24; const p = prof[q]; return 0.12 + dn(h, p[0], p[1]) * (q === 0 ? 1 : 0.65) + 0.45 * dn(h, p[2], p[3]) + R() * 0.05; }));
+      const cum = Array.from({ length: N }, (_, i) => { let a = 0; return V2.map((v) => (a += v[i])); });
+      const mx = Math.max.apply(null, cum.map((c) => c[c.length - 1]));
+      const A = (i) => -Math.PI / 2 + (i / N) * Math.PI * 2;
+      [0.25, 0.5, 0.75, 1].forEach((f) => circle(cx, cy, r0 + (RM - r0) * f, { op: f === 1 ? 0.3 : 0.14 }));
+      for (let h = 0; h < 24; h++) {
+        const a = -Math.PI / 2 + (h / 24) * Math.PI * 2;
+        line(cx + r0 * Math.cos(a), cy + r0 * Math.sin(a), cx + (RM + (h % 6 === 0 ? 12 : 6)) * Math.cos(a), cy + (RM + (h % 6 === 0 ? 12 : 6)) * Math.sin(a), { op: h % 6 === 0 ? 0.45 : 0.14 });
+      }
+      for (let q = lay.length - 1; q >= 0; q--) {
+        const pts = cum.map((c, i) => { const r = r0 + (c[q] / mx) * (RM - r0); return f1(cx + r * Math.cos(A(i))) + ' ' + f1(cy + r * Math.sin(A(i))); });
+        path('M' + pts.join(' L') + ' Z', { fill: col(lay[q]), stroke: '#140A0E', w: 1, op: 0.92 });
+      }
+      dot(cx, cy, r0, { fill: '#121A18' });
+      [['00', 0], ['06', 6], ['12', 12], ['18', 18]].forEach((l) => { const a = -Math.PI / 2 + (l[1] / 24) * Math.PI * 2; tick(cx + (RM + 28) * Math.cos(a), cy + (RM + 28) * Math.sin(a) + 6, l[0], { size: 11.5, fill: ink }); });
+      [0.5, 1].forEach((f) => note(cx + 5, cy - (r0 + (RM - r0) * f) + 15, f === 1 ? '100%' : '50%', 'start'));
+      txt(713, 98, 'Hour of day (UTC+3)', { size: 10.5, fill: ink2, anchor: 'end' });
+      note(713, 120, 'n = 58,917 posts');
+      note(713, 142, '14 Sep 2026');
+      const pk = (h) => { const i = Math.round((h / 24) * N) % N; const r = r0 + (cum[i][lay.length - 1] / mx) * (RM - r0); return [cx + r * Math.cos(A(i)), cy + r * Math.sin(A(i))]; };
+      const a = pk(21);
+      const b = pk(13);
+      const c = pk(8);
+      callout(a[0], a[1], 262, 132, 'a · 21:00', 'end', '3,140 posts/h');
+      callout(b[0], b[1], 300, 448, 'b · 13:00', 'end', '1,870 posts/h');
+      callout(c[0], c[1], 556, 452, 'c · 08:00', 'start', '1,120 posts/h');
+      legend(92, 516, [[comms[lay[0]][0], col(lay[0])], [comms[lay[1]][0], col(lay[1])]], { size: 10.5, dir: 'h', colGap: 26 });
+      legend(92, 542, [[comms[lay[2]][0], col(lay[2])], [comms[lay[3]][0], col(lay[3])]], { size: 10.5, dir: 'h', colGap: 26 });
+    }
+
+    if (k === 'rings') {
+      const cx = 400;
+      const cy = 302;
+      const series = [['X', P.sand, 21], ['Instagram', P.mist, 22.5], ['Telegram', P.clay, 9], ['Facebook', P.rose, 13]];
+      const g0 = 0.2;
+      const AH = (h) => -Math.PI / 2 + g0 + (h / 24) * (Math.PI * 2 - 2 * g0);
+      for (let h = 0; h <= 24; h++) {
+        const a = AH(h);
+        line(cx + 200 * Math.cos(a), cy + 200 * Math.sin(a), cx + (h % 6 === 0 ? 212 : 206) * Math.cos(a), cy + (h % 6 === 0 ? 212 : 206) * Math.sin(a), { op: h % 6 === 0 ? 0.6 : 0.3 });
+      }
+      path('M' + f1(cx + 200 * Math.cos(AH(0))) + ' ' + f1(cy + 200 * Math.sin(AH(0))) + ' A200 200 0 1 1 ' + f1(cx + 200 * Math.cos(AH(24))) + ' ' + f1(cy + 200 * Math.sin(AH(24))), { stroke: ink, w: 1, op: 0.3 });
+      [['00', 0], ['06', 6], ['12', 12], ['18', 18]].forEach((l) => { const a = AH(l[1]); tick(cx + 230 * Math.cos(a), cy + 230 * Math.sin(a) + 6, l[0], { size: 11.5, fill: ink }); });
+      const peaks = [];
+      series.forEach((s2, si) => {
+        const base = 44 + si * 40;
+        const N = 96;
+        const pts = Array.from({ length: N + 1 }, (_, i) => {
+          const h = (i / N) * 24;
+          const dh = Math.min(Math.abs(h - s2[2]), 24 - Math.abs(h - s2[2]));
+          const v = Math.exp(-Math.pow(dh / 3.2, 2)) + 0.25 * Math.exp(-Math.pow(Math.min(Math.abs(h - 13), 24 - Math.abs(h - 13)) / 3, 2)) + R() * 0.06;
+          const a = AH(h);
+          return [cx + (base + v * 32) * Math.cos(a), cy + (base + v * 32) * Math.sin(a), v, h];
+        });
+        const inner = Array.from({ length: N + 1 }, (_, i) => { const a = AH(((N - i) / N) * 24); return f1(cx + base * Math.cos(a)) + ' ' + f1(cy + base * Math.sin(a)); });
+        path('M' + pts.map((p) => f1(p[0]) + ' ' + f1(p[1])).join(' L') + ' L' + inner.join(' L') + ' Z', { fill: s2[1], stroke: 'none', w: 0, op: 0.5 });
+        path('M' + pts.map((p) => f1(p[0]) + ' ' + f1(p[1])).join(' L'), { stroke: s2[1], w: 2, op: 1 });
+        let pk = 0;
+        pts.forEach((p, i) => { if (p[2] > pts[pk][2]) pk = i; });
+        dot(pts[pk][0], pts[pk][1], 6, { fill: '#140A0E', stroke: s2[1], sw: 3 });
+        peaks.push(pts[pk]);
+        txt(cx - 10, cy - base - 8, s2[0], { size: 11, anchor: 'end' });
+      });
+      txt(713, 98, 'Hour of day (local)', { size: 10.5, fill: ink2, anchor: 'end' });
+      note(713, 120, 'n = 1.21M posts');
+      const tg = peaks[2];
+      callout(tg[0], tg[1], 716, 470, 'Telegram first', 'end', '09:00, 12 h before X');
+      note(713, 142, 'height = share of posts');
+    }
+
+    if (k === 'network') {
+      const d = this.draw(gg, Object.assign({ mode: 'all' }, look));
+      d.edges.forEach((e) => path(e.d, { stroke: e.stroke, w: e.w, op: e.op, cls: e.cls }));
+      d.nodes.forEach((nd) => out.circles.push({ x: nd.x, y: nd.y, r: nd.r, fill: nd.fill, op: nd.op, stroke: 'none', sw: 0, cls: 'nd', dl: nd.dl, du: nd.du }));
+      const NU = s.nums || {};
+      const S = gg.S;
+      const leadN = s.leaders ? gg.S.c.slice(0, s.leaders).map((c, ci) => gg.nodes.find((q) => q.ci === ci && q.hub)) : [];
+      const leadPairs = [];
+      leadN.forEach((A, i) => leadN.forEach((B, j) => { if (j > i && A && B) leadPairs.push([A, B]); }));
+      leadPairs.forEach((pr, pi) => {
+        const A = pr[0];
+        const B = pr[1];
+        const mx = (A.x + B.x) / 2;
+        const my = (A.y + B.y) / 2;
+        const bend = pi % 2 ? 0.16 : -0.16;
+        path('M' + f1(A.x) + ' ' + f1(A.y) + ' Q' + f1(mx - (B.y - A.y) * bend) + ' ' + f1(my + (B.x - A.x) * bend) + ' ' + f1(B.x) + ' ' + f1(B.y), { stroke: P.mist, w: 2.6, op: 0.85, cls: 'flow' });
+      });
+      leadN.forEach((A) => { if (A) { dot(A.x, A.y, A.r + 7, { fill: 'none', stroke: ink, sw: 1.6, op: 0.9 }); dot(A.x, A.y, A.r + 13, { fill: 'none', stroke: ink, sw: 0.8, op: 0.4 }); } });
+      const boxes = S.c.map((c, ci) => {
+        const ns = gg.nodes.filter((q) => q.ci === ci);
+        return { x0: Math.min.apply(null, ns.map((q) => q.x)) - 8, x1: Math.max.apply(null, ns.map((q) => q.x)) + 8, y0: Math.min.apply(null, ns.map((q) => q.y)) - 8, y1: Math.max.apply(null, ns.map((q) => q.y)) + 8 };
+      });
+      const lim = { x0: V.x0 + 12, x1: V.x1 - 12, y0: V.y0 + 96, y1: V.y1 - 96 };
+      const hit = (r, q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0;
+      const taken = boxes.slice();
+      S.c.forEach((c, ci) => {
+        const e = boxes[ci];
+        const nm = comms[ci][0];
+        const sub = (NU.a || [])[ci];
+        const w = Math.max(nm.length * 12.5, sub ? sub.length * 10.2 : 0) * 1.6 * 0.58;
+        const cx = (e.x0 + e.x1) / 2;
+        const cy = (e.y0 + e.y1) / 2;
+        const cands = [[cx, e.y1 + 26, 'middle'], [cx, e.y0 - 30, 'middle'], [e.x1 + 14, cy, 'start'], [e.x0 - 14, cy, 'end']];
+        let pick = cands[0];
+        if (s.lab && s.lab[ci]) { pick = s.lab[ci]; cands.length = 0; }
+        for (const q of cands) {
+          const lx0 = q[2] === 'middle' ? q[0] - w / 2 : (q[2] === 'end' ? q[0] - w : q[0]);
+          const r = { x0: lx0, x1: lx0 + w, y0: q[1] - 22, y1: q[1] + 30 };
+          if (r.x0 < lim.x0 || r.x1 > lim.x1 || r.y0 < lim.y0 || r.y1 > V.y1 - 70) continue;
+          if (taken.some((t, ti) => ti !== ci && hit(r, t))) continue;
+          pick = q;
+          taken.push(r);
+          break;
+        }
+        txt(pick[0], pick[1], nm, { size: 12.5, anchor: pick[2], fill: P[comms[ci][1]] });
+        if (sub) txt(pick[0], pick[1] + 22, sub, { size: 10.5, fill: ink2, anchor: pick[2] });
+      });
+      const nx = s.noteLeft ? V.x0 + 18 : V.x1 - 12;
+      txt(nx, V.y1 - 78, 'Modularity Q = ' + (NU.q || '0.62'), { size: 11, anchor: s.noteLeft ? 'start' : 'end' });
+      note(nx, V.y1 - 56, NU.n || '', s.noteLeft ? 'start' : 'end');
+      legend(V.x0 + 18, V.y1 - 18, [['Bridge tie', ink, 'line', 2], ['Within-group tie', P.rose, 'line', 1, 0.6]], { size: 10.5, dir: 'h', colGap: 22 });
+      const sx = V.x0 + 18 + (26 + 10 * 9.8 + 22) + (26 + 16 * 9.8 + 22);
+      dot(sx + 4, V.y1 - 24, 3, { fill: ink2 });
+      dot(sx + 18, V.y1 - 24, 5, { fill: ink2 });
+      dot(sx + 36, V.y1 - 24, 8, { fill: ink2 });
+      txt(sx + 50, V.y1 - 18, 'Node size = degree', { size: 10.5 });
+      const br = leadPairs.length ? leadPairs.map((pr) => ({ A: pr[0], B: pr[1] })) : gg.edges.filter((e) => e.br).map((e) => ({ A: gg.nodes[e.i], B: gg.nodes[e.j] }));
+      if (s.co && NU.br) {
+        const hubOf = (ci) => gg.nodes.find((q) => q.ci === ci && q.hub) || { x: gg.S.c[ci][0], y: gg.S.c[ci][1] };
+        const A = hubOf(s.co[0]);
+        const B = hubOf(s.co[1]);
+        callout((A.x + B.x) / 2 + (s.co[5] || 0), (A.y + B.y) / 2 + (s.co[6] || 0), s.co[2], s.co[3], NU.br[0], s.co[4], NU.br[1]);
+      } else if (br.length && NU.br) {
+        const lw = Math.max(NU.br[0].length * 12.5, NU.br[1].length * 10.5) * 1.6 * 0.58;
+        let best = null;
+        br.forEach((e) => {
+          const A = e.A;
+          const B = e.B;
+          const mx = (A.x + B.x) / 2;
+          const my = (A.y + B.y) / 2;
+          if (mx < lim.x0 || mx > lim.x1) return;
+          [1, -1].forEach((sx) => [-200, -160, -120, -80, -50, 50, 80, 120, 160, 200].forEach((dy) => [30, 70, 110, 150, 200, 250].forEach((dx) => {
+            const tx = mx + sx * dx;
+            const ty = my + dy;
+            const right = sx > 0;
+            const lx0 = right ? tx + 18 : tx - 18 - lw;
+            const r = { x0: lx0, x1: lx0 + lw, y0: ty - 16, y1: ty + 34 };
+            if (r.x0 < lim.x0 || r.x1 > lim.x1 || r.y0 < lim.y0 || r.y1 > V.y1 - 92) return;
+            const bad = taken.filter((t) => hit(r, t)).length;
+            const score = bad * 10000 + Math.hypot(dx, dy);
+            if (!best || score < best.score) best = { score, mx, my, tx, ty, right };
+          })));
+        });
+        if (best) callout(best.mx, best.my, best.tx, best.ty, NU.br[0], best.right ? 'start' : 'end', NU.br[1]);
+      }
+    }
+
+    if (k === 'geo') {
+      [20, 30].forEach((lat) => { line(30, MY(lat), 780, MY(lat), { op: 0.12 }); txt(8, MY(lat) - 6, lat + '°N', { size: 9.5, fill: ink2 }); });
+      [0, 20, 40].forEach((lon) => { line(MX(lon), 150, MX(lon), 470, { op: 0.08 }); });
+      const names = Object.keys(CITIES);
+      const heat = (lon, lat) => Math.min(1, names.reduce((a, c) => a + CITIES[c][2] * Math.exp(-((lon - CITIES[c][0]) ** 2 + (lat - CITIES[c][1]) ** 2) / (2 * 2.3 * 2.3)), 0));
+      const hc = (v) => [v > 0.78 ? P.mist : P.rose, (0.14 + v * 0.86).toFixed(2)];
+      LANDPTS().forEach((p) => { const v = heat(p[0], p[1]); const q = hc(v); dot(MX(p[0]), MY(p[1]), 2.2 + v * 5, { fill: q[0], op: q[1] }); });
+      const C = (nm) => [MX(CITIES[nm][0]), MY(CITIES[nm][1])];
+      let top = null;
+      [['Riyadh', 'Doha', 1], ['Cairo', 'Riyadh', 1], ['Cairo', 'Khartoum', 0], ['Rabat', 'Algiers', 0], ['Beirut', 'Damascus', 0], ['Amman', 'Baghdad', 0], ['Cairo', 'Beirut', 0]].forEach((c, ci) => {
+        const a = C(c[0]);
+        const b = C(c[1]);
+        const dd = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        const qy = (a[1] + b[1]) / 2 - dd * 0.45;
+        path('M' + f1(a[0]) + ' ' + f1(a[1]) + ' Q' + f1((a[0] + b[0]) / 2) + ' ' + f1(qy) + ' ' + f1(b[0]) + ' ' + f1(b[1]), { stroke: c[2] ? P.mist : ink, w: c[2] ? 3 : 1.4, op: c[2] ? 1 : 0.55, cls: 'flow' });
+        if (ci === 1) top = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 4 + qy / 2];
+      });
+      [['Rabat', 0, 26, 'middle'], ['Algiers', 0, -12, 'middle'], ['Cairo', -10, 20, 'end'], ['Beirut', -10, -8, 'end'], ['Baghdad', 6, -12, 'middle'], ['Riyadh', 0, 28, 'middle'], ['Doha', 12, 6, 'start']].forEach((l) => {
+        const p = C(l[0]);
+        dot(p[0], p[1], 4, { fill: ink, stroke: '#140A0E', sw: 1.5 });
+        txt(p[0] + l[1], p[1] + l[2], l[0], { size: 11, anchor: l[3] });
+      });
+      if (top) callout(top[0], top[1], 560, 118, 'Cairo–Riyadh', 'start', 'busiest, 27,400 reposts');
+      const c0 = C('Cairo');
+      callout(c0[0] - 4, c0[1] + 30, 330, 470, 'Spike after fuel-price rise', 'end', '5 Jul 2026, Greater Cairo');
+      line(716, 452, 758, 452, { w: 2, op: 0.8 });
+      line(716, 447, 716, 457, { w: 1.5, op: 0.8 });
+      line(758, 447, 758, 457, { w: 1.5, op: 0.8 });
+      tick(737, 440, '500 km', { size: 10 });
+      cbar(560, 488, 140, 10, (q) => hc(q), 'low', 'high');
+      txt(548, 498, 'Post density (KDE)', { size: 10.5, fill: ink2, anchor: 'end' });
+    }
+
+    if (k === 'swim') {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const X = (h) => 130 + (h / 24) * 560;
+      const nc = Math.min(6, comms.length);
+      [0, 6, 12, 18, 24].forEach((h) => line(X(h), 110, X(h), 384, { op: 0.1 }));
+      rect(124, 270, 572, 80, ink, 0.06, { rx: 10 });
+      days.forEach((d, di) => {
+        const y = 118 + di * 38;
+        txt(116, y + 12, d, { size: 11, anchor: 'end', fill: di === 4 || di === 5 ? ink : ink2 });
+        let h = 0;
+        let cur = Math.floor(R() * nc);
+        while (h < 24) {
+          const len = 1.5 + R() * (di >= 4 ? 5 : 7);
+          const e = Math.min(24, h + len);
+          rect(X(h) + 1, y, Math.max(2, X(e) - X(h) - 2), 14, col(cur), 0.95, { rx: 7, cls: 'grow', dl: (di * 0.06).toFixed(2) + 's' });
+          h = e;
+          cur = (cur + 1 + Math.floor(R() * (nc - 1))) % nc;
+        }
+      });
+      line(130, 392, 690, 392, { op: 0.45 });
+      [0, 6, 12, 18, 24].forEach((h) => { line(X(h), 392, X(h), 397, { op: 0.45 }); tick(X(h), 414, (h < 10 ? '0' : '') + h + ':00'); });
+      tick(410, 438, 'Hour of day, Riyadh (UTC+3)');
+      comms.slice(0, 6).forEach((c, i) => legend(70 + (i % 3) * 236, 474 + Math.floor(i / 3) * 24, [[c[0], col(i)]], { size: 10.5 }));
+      note(410, 532, 'Segment = theme leading those hours · n = 312,644 posts', 'middle');
+      callout(X(20.5), 118 + 4 * 38 + 7, 520, 90, 'Weekend switch, Fri–Sat', 'start');
+    }
+
+    if (k === 'sunburst') {
+      const cx = 400;
+      const cy = 292;
+      const plats = [['X', P.sand], ['YouTube', P.mist], ['Telegram', P.clay]];
+      const ctys = ['EG', 'SA', 'MA', 'JO'];
+      const pw = plats.map(() => 0.6 + R());
+      const pt = pw.reduce((a, b) => a + b, 0);
+      let a = -Math.PI / 2;
+      let best = null;
+      plats.forEach((pl, pi) => {
+        const a0 = a;
+        const a1 = a + (pw[pi] / pt) * Math.PI * 2;
+        path(sector(cx, cy, 38, 80, a0 + 0.012, a1 - 0.012), { fill: pl[1], stroke: 'none', w: 0, op: 0.95 });
+        const ma = (a0 + a1) / 2;
+        txt(cx + 59 * Math.cos(ma), cy + 59 * Math.sin(ma) + 6, pl[0], { size: 11, anchor: 'middle', fill: '#140A0E' });
+        const cwt = ctys.map(() => 0.4 + R());
+        const ct = cwt.reduce((x, y) => x + y, 0);
+        let b = a0;
+        ctys.forEach((c, ci) => {
+          const b1 = b + (cwt[ci] / ct) * (a1 - a0);
+          path(sector(cx, cy, 84, 122, b + 0.008, b1 - 0.008), { fill: pl[1], stroke: 'none', w: 0, op: 0.45 });
+          const mb = (b + b1) / 2;
+          if (b1 - b > 0.24) txt(cx + 103 * Math.cos(mb), cy + 103 * Math.sin(mb) + 5, c, { size: 10, anchor: 'middle' });
+          const subs = 2 + Math.floor(R() * 2);
+          let s0 = b;
+          for (let si = 0; si < subs; si++) {
+            const s1 = si === subs - 1 ? b1 : s0 + (b1 - b) * (0.25 + R() * 0.4);
+            const ro = 146 + R() * 22;
+            const ci2 = (ci + si + pi) % comms.length;
+            path(sector(cx, cy, 126, ro, s0 + 0.006, s1 - 0.006), { fill: col(ci2), stroke: 'none', w: 0, op: 0.92 });
+            const m = (s0 + s1) / 2;
+            if (!best || s1 - s0 > best.span) best = { span: s1 - s0, x: cx + ro * Math.cos(m), y: cy + ro * Math.sin(m), nm: comms[ci2][0], pl: pl[0], c };
+            s0 = s1;
+          }
+          b = b1;
+        });
+        a = a1;
+      });
+      tick(cx, cy - 2, 'n =', { size: 10 });
+      tick(cx, cy + 18, '402k', { size: 10 });
+      const am = -0.62;
+      [['Community', 146, 150], ['Country', 103, 178], ['Platform', 59, 206]].forEach((q) => {
+        const px = cx + q[1] * Math.cos(am);
+        const py = cy + q[1] * Math.sin(am);
+        dot(px, py, 3, { fill: ink });
+        path('M' + f1(px) + ' ' + f1(py) + ' L600 ' + q[2] + ' L610 ' + q[2], { stroke: ink, w: 1, op: 0.6 });
+        txt(616, q[2] + 5, q[0], { size: 10.5, fill: ink2 });
+      });
+      if (best) { if (best.x < cx) callout(best.x, best.y, 250, best.y < cy ? 140 : 452, best.nm, 'end', best.pl + ' · ' + best.c); else callout(best.x, best.y, 560, best.y < cy ? 250 : 452, best.nm, 'start', best.pl + ' · ' + best.c); }
+      comms.slice(0, 6).forEach((c, i) => legend(92 + (i % 2) * 310, 508 + Math.floor(i / 2) * 22, [[c[0], col(i)]], { size: 10 }));
+    }
+
+    if (k === 'mantel') {
+      const vars = ['Prices', 'Fuel', 'Rent', 'Wages', 'Jobs', 'Water', 'Heat', 'Football', 'Memes'];
+      const n = vars.length;
+      const cs = 34;
+      const x0 = 300;
+      const y0 = 118;
+      const corr = vars.map((a, i) => vars.map((b, j) => {
+        if (i === j) return 1;
+        const near = Math.abs(i - j) < 3 && i < 5 && j < 5;
+        const hot = (i === 5 && j === 6) || (i === 6 && j === 5);
+        return (near || hot ? 0.45 + R() * 0.5 : (R() - 0.55) * 0.9);
+      }));
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) corr[j][i] = corr[i][j];
+      const cell = (cx, cy, v, big) => {
+        const sz = 8 + Math.abs(v) * ((big || cs) - 8);
+        const b0 = big || cs;
+        rect(cx + (b0 - sz) / 2, cy + (b0 - sz) / 2, sz, sz, v >= 0 ? P.rose : P.teal, 0.3 + Math.abs(v) * 0.7, { rx: 2 });
+      };
+      for (let j = 0; j < n; j++) {
+        for (let i = j; i < n; i++) {
+          const v = corr[j][i];
+          const cx = x0 + i * (cs + 2);
+          const cy = y0 + j * (cs + 2);
+          path('M' + cx + ' ' + cy + ' h' + cs + ' v' + cs + ' h-' + cs + ' Z', { stroke: ink, w: 0.6, op: 0.18 });
+          if (i !== j) cell(cx, cy, v);
+          if (i !== j && Math.abs(v) > 0.7) txt(cx + cs / 2, cy + cs / 2 + 7, v > 0.85 ? '***' : '**', { size: 11, anchor: 'middle', fill: '#140A0E' });
+        }
+        txt(x0 + j * (cs + 2) - 6, y0 + j * (cs + 2) + cs / 2 + 6, vars[j], { size: 11, anchor: 'end' });
+      }
+      const groups = [['X', 176, P.sand], ['Reddit', 318, P.mist], ['Telegram', 460, P.clay]];
+      groups.forEach((g2, gi) => {
+        for (let j = 0; j < n; j++) {
+          const tx = x0 + j * (cs + 2) - 4;
+          const ty = y0 + j * (cs + 2) + cs / 2;
+          const strong = (gi === 0 && j < 3) || (gi === 1 && (j === 7 || j === 8)) || (gi === 2 && (j === 1 || j === 4));
+          const mid = (gi + j) % 3 === 0;
+          path('M130 ' + g2[1] + ' C200 ' + g2[1] + ' ' + f1(tx - 120) + ' ' + f1(ty) + ' ' + f1(tx - 62) + ' ' + f1(ty), { stroke: strong ? g2[2] : ink, w: strong ? 4.5 : (mid ? 2.2 : 1), op: strong ? 0.9 : 0.22, cls: strong ? 'flow' : '' });
+        }
+        dot(126, g2[1], 8, { fill: g2[2] });
+        txt(112, g2[1] - 16, g2[0], { size: 12 });
+      });
+      const lx = 640;
+      txt(lx, 128, 'Pearson’s r', { size: 10.5, fill: ink2 });
+      [-1, -0.5, 0, 0.5, 1].forEach((v, i) => { cell(lx + i * 26, 138, v, 22); });
+      tick(lx + 11, 182, '−1');
+      tick(lx + 63, 182, '0');
+      tick(lx + 115, 182, '1');
+      txt(lx, 222, 'Mantel’s r', { size: 10.5, fill: ink2 });
+      [['< 0.2', 1], ['0.2–0.4', 2.2], ['≥ 0.4', 4.5]].forEach((q, i) => legend(lx, 248 + i * 22, [[q[0], ink, 'line', q[1], 0.8]], { size: 10 }));
+      txt(lx, 336, 'Mantel’s p', { size: 10.5, fill: ink2 });
+      legend(lx, 362, [['< 0.05', P.sand, 'line', 4], ['≥ 0.05', 'rgba(242,236,228,0.35)', 'line', 2]], { size: 10, gap: 22 });
+      note(lx, 444, '** p < 0.01', 'start');
+      note(lx, 466, '*** p < 0.001', 'start');
+      note(20, 520, 'n = 487,210 posts · 9 themes × 3 platforms · Jan–Sep 2026', 'start');
+    }
+
+    if (k === 'river') {
+      const N = 26;
+      const X = (i) => 60 + (500 * i) / (N - 1);
+      const bumps = comms.map(() => [[R() * N, 2 + R() * 4, 0.6 + R()], [R() * N, 2 + R() * 3, 0.3 + R() * 0.7]]);
+      const vals = bumps.map((b, kk) => Array.from({ length: N }, (_, t) => 0.18 + b.reduce((a, q) => a + q[2] * Math.exp(-Math.pow((t - q[0]) / q[1], 2)), 0) + (kk === 0 && t > 16 ? 0.9 * Math.exp(-Math.pow((t - 18) / 2.2, 2)) : 0)));
+      const tot = Array.from({ length: N }, (_, t) => vals.reduce((a, v) => a + v[t], 0));
+      const mx = Math.max.apply(null, tot);
+      const sc = 290 / mx;
+      const cy = 300;
+      [0, 8, 16, 25].forEach((w) => line(X(w), 140, X(w), 460, { op: 0.08 }));
+      let lower = tot.map((v) => cy + (v * sc) / 2);
+      const ends = [];
+      vals.forEach((v, kk) => {
+        const upper = lower.map((y, t) => y - v[t] * sc);
+        const topP = upper.map((y, t) => [X(t), y]);
+        const bot = lower.map((y, t) => [X(t), y]).reverse();
+        path(smooth(topP) + ' L' + f1(bot[0][0]) + ' ' + f1(bot[0][1]) + seg(bot) + ' Z', { fill: col(kk), stroke: '#23121B', w: 0.8, op: 0.9 });
+        ends.push({ kk, y: (upper[N - 1] + lower[N - 1]) / 2 });
+        lower = upper;
+      });
+      ends.sort((a, b) => a.y - b.y);
+      const ly = ends.map((e) => e.y);
+      for (let it = 0; it < 30; it++) for (let i = 1; i < ly.length; i++) if (ly[i] - ly[i - 1] < 24) { const d = (24 - (ly[i] - ly[i - 1])) / 2; ly[i - 1] -= d; ly[i] += d; }
+      ends.forEach((e, i) => {
+        path('M' + f1(X(N - 1) + 3) + ' ' + f1(e.y) + ' C' + f1(X(N - 1) + 14) + ' ' + f1(e.y) + ' ' + f1(X(N - 1) + 14) + ' ' + f1(ly[i]) + ' ' + f1(X(N - 1) + 24) + ' ' + f1(ly[i]), { stroke: col(e.kk), w: 1.5, op: 0.9 });
+        txt(X(N - 1) + 30, ly[i] + 6, comms[e.kk][0], { size: 11 });
+      });
+      line(X(18), 136, X(18), 462, { w: 1.5, op: 0.7, cls: 'flow' });
+      txt(X(18) + 8, 132, 'Fuel-price rise, week 19', { size: 12 });
+      txt(X(18) + 8, 154, 'prices stream widens', { size: 10.5, fill: ink2 });
+      line(60, 472, 560, 472, { op: 0.45 });
+      [[1, 'W1'], [9, 'W9'], [17, 'W17'], [25, 'W26']].forEach((w) => { line(X(w[0] === 25 ? 25 : w[0] - 1), 472, X(w[0] === 25 ? 25 : w[0] - 1), 477, { op: 0.45 }); tick(X(w[0] === 25 ? 25 : w[0] - 1), 494, w[1]); });
+      tick(310, 518, 'Week of 2026');
+      line(604, 492, 604, 532, { w: 3, op: 0.8 });
+      note(614, 518, '= 5,000 posts / week', 'start');
+      note(790, 548, 'n = 146,082 posts', 'end');
+    }
+
+    if (k === 'radial') {
+      const cx = 400;
+      const cy = 252;
+      const r0 = 36;
+      const w = 17;
+      const g0 = 0.21;
+      const AH = (h) => -Math.PI / 2 + g0 + (h / 24) * (Math.PI * 2 - 2 * g0);
+      const hc = (v) => [v > 0.82 ? P.mist : P.rose, (0.08 + v * 0.92).toFixed(2)];
+      for (let d = 0; d < 7; d++) {
+        for (let h = 0; h < 24; h++) {
+          const dh = Math.min(Math.abs(h + 0.5 - 23.5), 24 - Math.abs(h + 0.5 - 23.5));
+          const night = Math.exp(-Math.pow(dh / 2.4, 2)) + Math.exp(-Math.pow((h - 13) / 3, 2)) * 0.35;
+          const v = Math.min(1, night * (d >= 4 && d <= 5 ? 1.2 : 0.82) + R() * 0.18);
+          const q = hc(v);
+          path(sector(cx, cy, r0 + d * w + 1, r0 + (d + 1) * w - 1, AH(h) + 0.01, AH(h + 1) - 0.01), { fill: q[0], stroke: 'none', w: 0, op: q[1] });
+        }
+        tick(cx, cy - r0 - d * w - 4, 'MTWTFSS'[d], { size: 8.5, fill: ink });
+      }
+      [['00', 0], ['06', 6], ['12', 12], ['18', 18]].forEach((l) => { const a = AH(l[1]); tick(cx + 172 * Math.cos(a), cy + 172 * Math.sin(a) + 6, l[0], { size: 11.5, fill: ink }); });
+      tick(cx, cy + 6, 'hour', { size: 9.5 });
+      cbar(548, 112, 124, 10, hc, 'low', 'high', 'Posts per hour');
+      note(548, 170, 'Rings: Mon → Sun', 'start');
+      note(548, 190, 'inner to outer', 'start');
+      const pa = (AH(23) + AH(24)) / 2 - 0.02;
+      const pr = r0 + 5.5 * w;
+      callout(cx + pr * Math.cos(pa), cy + pr * Math.sin(pa), 300, 110, 'Fri–Sat, 23:00', 'end', 'the late-night peak');
+    }
+
+    if (k === 'sankey') {
+      const cols3 = [
+        { head: 'Who posts', x: 232, nodes: comms.map((c, i) => ({ name: c[0], fill: col(i) })) },
+        { head: 'How it is framed', x: 432, nodes: [['Shortage', P.mist], ['Prices', P.sand], ['Blame', P.rose], ['Fixes', P.teal]].map((nd) => ({ name: nd[0], fill: nd[1] })) },
+        { head: 'Where it travels', x: 640, nodes: [['X', P.dusk], ['Facebook', P.clay], ['News sites', P.sand]].map((nd) => ({ name: nd[0], fill: nd[1] })) }
+      ];
+      const M1 = cols3[0].nodes.map(() => cols3[1].nodes.map(() => (R() < 0.25 ? 0.12 : 0.3 + R())));
+      const mid = cols3[1].nodes.map((nd, j) => M1.reduce((a, r) => a + r[j], 0));
+      const M2 = mid.map((v, j) => { const p = cols3[2].nodes.map((q, qi) => 0.2 + R() + (j === 2 && qi === 0 ? 1.2 : 0)); const sm = p.reduce((a, b) => a + b, 0); return p.map((q) => (q / sm) * v); });
+      const tot = mid.reduce((a, b) => a + b, 0);
+      const top = 152;
+      const H = 318;
+      const gap = 10;
+      const bw = 12;
+      const layout = (vs) => { const sc = (H - gap * (vs.length - 1)) / tot; let y = top; return { s: sc, ys: vs.map((v) => { const o = y; y += v * sc + gap; return o; }) }; };
+      const v0 = M1.map((r) => r.reduce((a, b) => a + b, 0));
+      const v2 = cols3[2].nodes.map((nd, q) => M2.reduce((a, r) => a + r[q], 0));
+      const L = [layout(v0), layout(mid), layout(v2)];
+      const vals = [v0, mid, v2];
+      let hot = null;
+      [[M1, 0, 1], [M2, 1, 2]].forEach((st) => {
+        const A = L[st[1]];
+        const B = L[st[2]];
+        const offA = A.ys.slice();
+        const offB = B.ys.slice();
+        st[0].forEach((row, i) => row.forEach((v, j) => {
+          const a0 = offA[i];
+          const b0 = offB[j];
+          offA[i] += v * A.s;
+          offB[j] += v * B.s;
+          ribbon(cols3[st[1]].x + bw, a0, offA[i], cols3[st[2]].x, b0, offB[j], cols3[st[1]].nodes[i].fill, st[1] === 0 ? 0.38 : (i === 2 && j === 0 ? 0.75 : 0.3));
+          if (st[1] === 1 && i === 2 && j === 0) hot = [(cols3[1].x + bw + cols3[2].x) / 2 + 30, (a0 + offA[i] + b0 + offB[j]) / 4 + 4];
+        }));
+      });
+      cols3.forEach((c, ci) => {
+        c.nodes.forEach((nd, i) => {
+          const h = vals[ci][i] * L[ci].s;
+          rect(c.x, L[ci].ys[i], bw, h, nd.fill, 1, { rx: 2 });
+          const ty = L[ci].ys[i] + h / 2 + 6;
+          if (ci === 0) txt(c.x - 8, ty, nd.name, { size: 11, anchor: 'end' });
+          else txt(c.x + bw + 8, ty, nd.name, { size: 11 });
+          if (ci === 0 && h > 24) txt(c.x - 8, ty + 20, Math.round((vals[0][i] / tot) * 100) + '%', { size: 9.5, fill: ink2, anchor: 'end' });
+        });
+        head(c.x + bw / 2, 132, c.head, { size: 11.5 });
+        line(c.x + bw / 2 - 44, 142, c.x + bw / 2 + 44, 142, { op: 0.4 });
+      });
+      tick(332, 136, '→', { size: 12 });
+      tick(536, 136, '→', { size: 12 });
+      if (hot) callout(hot[0], hot[1], 600, 498, 'Blame → X', 'start', 'largest flow');
+      note(36, 520, 'Band width = posts · n = 23,518 posts, Jun–Aug 2026', 'start');
+    }
+
+    if (k === 'ridge') {
+      const rows = 8;
+      const N = 49;
+      const X = (i) => 130 + (560 * i) / (N - 1);
+      [0, 12, 24, 36, 48].forEach((i) => line(X(i), 106, X(i), 440, { op: 0.08 }));
+      for (let r = 0; r < rows; r++) {
+        const base = 172 + r * 37;
+        txt(120, base, 'W' + (r + 1), { size: 10.5, anchor: 'end', fill: r === 5 || r === 6 ? ink : ink2 });
+        [[P.rose, 21 + R() * 1.5, 0], [P.teal, 22 + R() * 1.5, 1]].forEach((s2) => {
+          const amp = 60 + (r === 5 || r === 6 ? 34 : 0);
+          const pts = Array.from({ length: N }, (_, i) => {
+            const h = i / 2;
+            const v = Math.exp(-Math.pow((h - s2[1]) / 2.2, 2)) + 0.55 * Math.exp(-Math.pow((h - 13 - s2[2]) / 2.6, 2)) + R() * 0.05;
+            return [X(i), base - v * amp];
+          });
+          path(smooth(pts) + ' L' + f1(X(N - 1)) + ' ' + base + ' L' + f1(X(0)) + ' ' + base + ' Z', { fill: s2[0], stroke: '#140A0E', w: 1, op: 0.62 });
+        });
+      }
+      const ya = 452;
+      line(130, ya, 690, ya, { op: 0.45 });
+      [['00', 0], ['06', 12], ['12', 24], ['18', 36], ['24', 48]].forEach((l) => { line(X(l[1]), ya, X(l[1]), ya + 5, { op: 0.45 }); tick(X(l[1]), ya + 22, l[0] + ':00'); });
+      tick(410, ya + 46, 'Hour of day (GMT+1)');
+      legend(560, 70, [[comms[0][0], P.rose], [comms[1][0], P.teal]], { size: 10.5, gap: 24 });
+      note(756, 530, 'Weeks of the Arab Cup · n = 88,450 posts');
+      callout(X(44), 172 + 5 * 37 - 82, 300, 122, 'Match-night overlap', 'end', 'W6–W7, semi-final week');
+    }
+
+    if (k === 'chord') {
+      const n = comms.length;
+      const cx = 400;
+      const cy = 298;
+      const r = 116;
+      const M = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 0 : (i === 0 || j === 0 ? 0.6 : 0.15) + R() * 0.5)));
+      const tot = M.reduce((a, row) => a + row.reduce((b, c) => b + c, 0), 0);
+      const gap = 0.07;
+      const span = Math.PI * 2 - gap * n;
+      let a = -Math.PI / 2 + gap / 2;
+      const start = [];
+      const pos = M.map((row) => { const s0 = a; start.push(s0); a += (row.reduce((b, c) => b + c, 0) / tot) * span + gap; return s0; });
+      const P2 = (rr, ang) => f1(cx + rr * Math.cos(ang)) + ' ' + f1(cy + rr * Math.sin(ang));
+      const off = pos.slice();
+      const sub = M.map((row, i) => row.map((v) => { const s0 = off[i]; off[i] += (v / tot) * span; return [s0, off[i]]; }));
+      let best = null;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const s1 = sub[i][j];
+          const t = sub[j][i];
+          const big = M[i][j] + M[j][i];
+          path('M' + P2(r, s1[0]) + ' A' + r + ' ' + r + ' 0 0 1 ' + P2(r, s1[1]) + ' Q' + cx + ' ' + cy + ' ' + P2(r, t[0]) + ' A' + r + ' ' + r + ' 0 0 1 ' + P2(r, t[1]) + ' Q' + cx + ' ' + cy + ' ' + P2(r, s1[0]) + ' Z', { fill: col(M[i][j] >= M[j][i] ? i : j), stroke: 'none', w: 0, op: 0.55 });
+          if (!best || big > best.v) {
+            const ma = (s1[0] + s1[1]) / 2;
+            const mb = (t[0] + t[1]) / 2;
+            best = { v: big, i, j, x: 0.25 * (cx + r * Math.cos(ma)) + 0.5 * cx + 0.25 * (cx + r * Math.cos(mb)), y: 0.25 * (cy + r * Math.sin(ma)) + 0.5 * cy + 0.25 * (cy + r * Math.sin(mb)) };
+          }
+        }
+      }
+      for (let i = 0; i < n; i++) {
+        const e = start[i] + (M[i].reduce((b, c) => b + c, 0) / tot) * span;
+        path('M' + P2(r + 10, start[i]) + ' A' + (r + 10) + ' ' + (r + 10) + ' 0 0 1 ' + P2(r + 10, e), { stroke: col(i), w: 12, op: 1 });
+        for (let q = start[i]; q < e; q += (span / tot) * (tot / 20)) path('M' + P2(r + 17, q) + ' L' + P2(r + 22, q), { stroke: ink, w: 1, op: 0.5 });
+        const ma = (start[i] + e) / 2;
+        const lx = cx + (r + 34) * Math.cos(ma);
+        const ly = cy + (r + 34) * Math.sin(ma);
+        const anc = lx < cx - 30 ? 'end' : (lx > cx + 30 ? 'start' : 'middle');
+        const words = comms[i][0].split(' ');
+        const l1 = words.length > 1 && comms[i][0].length > 13 ? words.slice(0, Math.ceil(words.length / 2)).join(' ') : comms[i][0];
+        const l2 = l1 === comms[i][0] ? '' : words.slice(Math.ceil(words.length / 2)).join(' ');
+        const yy = ly + (Math.sin(ma) > 0.3 ? 14 : (Math.sin(ma) < -0.3 ? -4 - (l2 ? 20 : 0) : 6 - (l2 ? 10 : 0)));
+        txt(lx, yy, l1, { size: 11, anchor: anc, fill: col(i) });
+        if (l2) txt(lx, yy + 20, l2, { size: 11, anchor: anc, fill: col(i) });
+      }
+      if (best) callout(best.x, best.y, 150, 512, 'Busiest pair', 'start', comms[best.i][0].split(' ')[0] + ' ↔ ' + comms[best.j][0].split(' ')[0]);
+      note(700, 512, 'Chord width = replies', 'end');
+      note(700, 534, 'colour = larger sender', 'end');
+      note(700, 556, 'ticks = 5% · n = 31,976', 'end');
+    }
+
+    if (k === 'storyline') {
+      const n = Math.min(5, comms.length);
+      const scenes = [[[0], [1], [2], [3], [4]], [[0, 1], [2], [3, 4]], [[0, 1, 2], [3, 4]], [[0, 1, 2, 3, 4]], [[0, 2], [1, 3, 4]], [[0], [2], [1, 3], [4]]];
+      const dayOf = [1, 3, 6, 8, 11, 14];
+      const xs = scenes.map((_, i) => 176 + i * 106);
+      const ys = Array.from({ length: n }, () => []);
+      const boxes = [];
+      scenes.forEach((sc, si) => {
+        const inner = 15;
+        const between = 44;
+        const height = sc.reduce((a, g) => a + (g.length - 1) * inner, 0) + (sc.length - 1) * between;
+        let y = 300 - height / 2;
+        sc.forEach((g) => { g.forEach((m, mi) => { ys[m][si] = y + mi * inner; }); if (g.length > 1) boxes.push([xs[si], y, y + (g.length - 1) * inner]); y += (g.length - 1) * inner + between; });
+      });
+      rect(xs[2] - 30, 112, xs[3] - xs[2] + 60, 362, ink, 0.06, { rx: 26 });
+      txt((xs[2] + xs[3]) / 2, 104, 'Viral clip posted', { size: 12, anchor: 'middle' });
+      boxes.forEach((b) => path('M' + f1(b[0] - 16) + ' ' + f1(b[1] - 13 + 13) + ' a13 13 0 0 1 13 -13 h6 a13 13 0 0 1 13 13 V' + f1(b[2]) + ' a13 13 0 0 1 -13 13 h-6 a13 13 0 0 1 -13 -13 Z', { stroke: ink, w: 1, op: 0.45 }));
+      for (let m = 0; m < n; m++) {
+        const pts = [[24, ys[m][0]], [100, ys[m][0]]].concat(xs.map((x, si) => [x, ys[m][si]])).concat([[760, ys[m][scenes.length - 1]]]);
+        path(smooth(pts), { stroke: col(m), w: 5, op: 0.95 });
+        txt(24, ys[m][0] - 12, comms[m][0], { size: 11, fill: col(m) });
+      }
+      const allY = ys.map((q) => q[3]);
+      callout(xs[3], Math.max.apply(null, allY) + 14, 470, 448, 'All five converge', 'start', 'day 8, one shared thread');
+      txt(xs[4], Math.min.apply(null, ys.map((q) => q[4])) - 22, 'Split', { size: 11, anchor: 'middle', fill: ink2 });
+      const ya = 494;
+      line(24, ya, 760, ya, { op: 0.45 });
+      xs.forEach((x, i) => { line(x, ya, x, ya + 5, { op: 0.45 }); tick(x, ya + 22, String(dayOf[i])); });
+      tick(440, ya + 46, 'Day since first post');
+      note(790, 72, 'n = 640 channels · 52,300 posts');
+      note(790, 94, 'boxes = shared thread', 'end');
+    }
+
+    if (k === 'bracket') {
+      const xsL = [56, 204, 352, 500, 636];
+      const heads = [['Channels', '16'], ['Groups', '8'], ['Amplifiers', '4'], ['Aggregators', '2'], ['Headline', '1']];
+      const pal8 = [P.rose, P.teal, P.sand, P.mist, P.clay, P.dusk, P.rose, P.teal];
+      const levels = [Array.from({ length: 16 }, (_, i) => ({ w: 4 + R() * 6, c: i >> 1 }))];
+      let y = 168;
+      levels[0].forEach((nd) => { nd.y = y; y += nd.w + 10; });
+      for (let lv = 1; lv < 5; lv++) {
+        const prev = levels[lv - 1];
+        const cur = [];
+        for (let i = 0; i < prev.length; i += 2) {
+          const a = prev[i];
+          const b = prev[i + 1];
+          const w = a.w + b.w;
+          const cy = (a.y + a.w / 2 + b.y + b.w / 2) / 2;
+          cur.push({ w, y: cy - w / 2, kids: [a, b], c: a.c });
+        }
+        levels.push(cur);
+      }
+      for (let lv = 1; lv < 5; lv++) {
+        levels[lv].forEach((p) => {
+          let o = p.y;
+          p.kids.forEach((ch) => {
+            ribbon(xsL[lv - 1] + 9, ch.y, ch.y + ch.w, xsL[lv], o, o + ch.w, pal8[ch.c], 0.62);
+            o += ch.w;
+          });
+        });
+      }
+      levels.forEach((lvl, lv) => {
+        lvl.forEach((nd) => rect(xsL[lv], nd.y, 9, nd.w, ink, 0.6, { rx: 2 }));
+        head(xsL[lv] + 4, 128, heads[lv][0], { size: 11.5 });
+        tick(xsL[lv] + 4, 150, 'n = ' + heads[lv][1], { size: 10 });
+      });
+      const fin = levels[4][0];
+      txt(xsL[4] + 18, fin.y + fin.w / 2 + 6, 'News outlet', { size: 12 });
+      txt(xsL[4] + 18, fin.y + fin.w / 2 + 28, '4,271 forwards', { size: 9.5, fill: ink2 });
+      const m = levels[2][1];
+      callout(xsL[2] + 4, m.y + m.w / 2, 250, 474, 'Narratives merge', 'end', 'at the amplifier stage');
+      note(790, 532, 'Band width = forwarded posts · n = 18,906 forwards');
+    }
+
+    if (s.photo) {
+      out.paths.forEach((p) => { p.op = (p.op * 0.8).toFixed(2); });
+    }
+    return out;
+  }
+  net(T, key, base, wk) {
+    this._c = this._c || {};
+    const ck = key + '-' + wk;
+    if (this._c[ck]) return this._c[ck];
+    const S = SHAPES[T.shape];
+    let seed = (base + wk * 13) % 2147483647;
+    const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const G = () => (R() + R() + R() + R() - 2) / 2;
+    const N = 64;
+    const E = 128;
+    const counts = S.s.map((x) => Math.round(x * N));
+    counts[0] += N - counts.reduce((a, b) => a + b, 0);
+    const nodes = [];
+    counts.forEach((cnt, ci) => {
+      const cx = S.c[ci][0];
+      const cy = S.c[ci][1];
+      const sp = S.sp[ci];
+      for (let k = 0; k < cnt; k++) {
+        const hub = k === 0 || (S.star && k < 3);
+        const a = R() * 6.2832;
+        const d = hub ? R() * sp * 0.25 : (0.35 + Math.abs(G()) * 1.4) * sp;
+        nodes.push({ ci, hub, x: cx + Math.cos(a) * d + (wk - 4) * 2.5 * (ci % 2 ? 1 : -1), y: cy + Math.sin(a) * d * 0.85, r: hub ? 10 + R() * 5 : 2.4 + R() * R() * 6, deg: 0, bridge: false });
+      }
+    });
+    for (let it = 0; it < 28; it++) {
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const A = nodes[i];
+          const B = nodes[j];
+          const dx = B.x - A.x;
+          const dy = B.y - A.y;
+          const d = Math.hypot(dx, dy) || 0.01;
+          const m = A.r + B.r + 6;
+          if (d < m) {
+            const p = (m - d) / 2 / d;
+            A.x -= dx * p; A.y -= dy * p; B.x += dx * p; B.y += dy * p;
+          }
+        }
+      }
+    }
+    nodes.forEach((n) => { n.x = Math.max(20, Math.min(780, n.x)); n.y = Math.max(34, Math.min(540, n.y)); });
+    const edges = [];
+    const seen = {};
+    const add = (i, j, br) => {
+      if (i === j || i === undefined || j === undefined) return false;
+      const k = i < j ? i + '-' + j : j + '-' + i;
+      if (seen[k]) return false;
+      seen[k] = true;
+      edges.push({ i, j, br });
+      nodes[i].deg++; nodes[j].deg++;
+      if (br) { nodes[i].bridge = true; nodes[j].bridge = true; }
+      return true;
+    };
+    const members = (ci) => nodes.map((n, i) => i).filter((i) => nodes[i].ci === ci);
+    const nc = S.c.length;
+    const nb = S.b + (wk % 3);
+    let made = 0;
+    for (let guard = 0; made < nb && guard < 400; guard++) {
+      let ca = Math.floor(R() * nc);
+      let cb = Math.floor(R() * nc);
+      if (T.shape === 'bipolar' && R() < 0.7) { ca = 0; cb = 1; }
+      if (S.center && R() < 0.85) { ca = 0; if (cb === 0) cb = 1 + Math.floor(R() * (nc - 1)); }
+      if (ca === cb) continue;
+      const ma = members(ca);
+      const mb = members(cb);
+      if (add(ma[Math.floor(R() * ma.length)], mb[Math.floor(R() * mb.length)], true)) made++;
+    }
+    const dist = (a, b) => Math.hypot(nodes[a].x - nodes[b].x, nodes[a].y - nodes[b].y);
+    const cand = [];
+    nodes.forEach((n, i) => {
+      const same = members(n.ci).filter((j) => j !== i).sort((a, b) => dist(a, i) - dist(b, i));
+      if (S.star && !n.hub) {
+        const hubs = same.filter((j) => nodes[j].hub);
+        if (hubs.length) cand.push([i, hubs[Math.floor(R() * hubs.length)]]);
+      }
+      if (same[0] !== undefined) cand.push([i, same[0]]);
+      if (same[1] !== undefined && R() < 0.8) cand.push([i, same[1]]);
+      if (!n.hub) {
+        const h = same.find((j) => nodes[j].hub);
+        if (h !== undefined && R() < 0.35) cand.push([i, h]);
+      }
+      if (same[2] !== undefined && R() < 0.4) cand.push([i, same[2]]);
+    });
+    for (let c = 0; c < cand.length && edges.length < E; c++) add(cand[c][0], cand[c][1], false);
+    for (let pad = 0; edges.length < E && pad < 600; pad++) {
+      const i = Math.floor(R() * N);
+      const same = members(nodes[i].ci);
+      add(i, same[Math.floor(R() * same.length)], false);
+    }
+    const out = { T, S, nodes, edges, counts };
+    this._c[ck] = out;
+    return out;
+  }
+
+  draw(g, o) {
+    const T = g.T;
+    const pal = o.pal;
+    const colOf = (ci) => pal[T.comms[ci][1]];
+    const mode = o.mode || 'all';
+    const sel = o.sel;
+    const hasSel = sel !== null && sel !== undefined;
+    const edges = g.edges.map((e, ix) => {
+      const A = g.nodes[e.i];
+      const B = g.nodes[e.j];
+      const mx = (A.x + B.x) / 2;
+      const my = (A.y + B.y) / 2;
+      const dx = B.x - A.x;
+      const dy = B.y - A.y;
+      const bend = (e.br ? 0.22 : 0.12) * (ix % 2 ? 1 : -1);
+      const d = 'M' + A.x.toFixed(1) + ' ' + A.y.toFixed(1) + ' Q' + (mx - dy * bend).toFixed(1) + ' ' + (my + dx * bend).toFixed(1) + ' ' + B.x.toFixed(1) + ' ' + B.y.toFixed(1);
+      const touches = hasSel && (e.i === sel || e.j === sel);
+      let op = e.br ? 0.8 : o.intra;
+      if (mode === 'bridges') op = e.br ? 0.95 : 0.06;
+      if (mode === 'clusters') op = e.br ? 0.25 : 0.05;
+      if (hasSel) op = touches ? 1 : op * 0.35;
+      return { d, stroke: e.br ? o.bridge : colOf(A.ci), w: e.br ? (touches ? 2.4 : 1.6) : (touches ? 2 : 1), op, cls: e.br ? 'flow' : '' };
+    });
+    const nodes = g.nodes.map((n, i) => {
+      let op = n.hub ? 1 : 0.85;
+      if (mode === 'bridges') op = n.bridge || n.hub ? 1 : 0.22;
+      if (mode === 'clusters') op = n.hub ? 1 : 0.5;
+      const isSel = sel === i;
+      if (hasSel && !isSel) op *= 0.6;
+      return {
+        x: n.x.toFixed(1), y: n.y.toFixed(1), r: (n.r * (o.scale || 1)).toFixed(1), fill: colOf(n.ci), op,
+        ring: isSel ? o.bridge : (n.hub ? o.hubRing : 'none'), rw: isSel ? 3 : (n.hub ? 1.5 : 0),
+        dl: '-' + ((i * 0.37) % 6).toFixed(2) + 's', du: (4.5 + (i % 5) * 0.8).toFixed(1) + 's',
+        pick: o.pickNode ? () => o.pickNode(i) : undefined
+      };
+    });
+    const clouds = g.S.c.map((c, ci) => ({ x: c[0], y: c[1], r: Math.round(g.S.sp[ci] * 2.1), fill: colOf(ci), op: mode === 'clusters' ? o.cloud * 2.6 : o.cloud }));
+    const labels = g.S.c.map((c, ci) => ({ x: c[0], y: Math.max(22, Math.round(c[1] - g.S.sp[ci] * 1.4)), name: T.comms[ci][0], fill: colOf(ci) }));
+    return { edges, nodes, clouds, labels };
+  }
+
+  renderVals() {
+    const st = this.state || {};
+    const theme = st.th ?? this.props.theme ?? 'dark';
+    const dark = theme === 'dark';
+    const pal = dark ? PAL_D : PAL_L;
+    const lang = st.lang ?? 'en';
+    const ar = lang === 'ar';
+    const L = (s) => { if (!ar || typeof s !== 'string') return s; if (AR[s] !== undefined) return AR[s]; const m = s.match(/^n = (.+)$/); return m ? 'العدد ' + m[1] : s; };
+    this._tr = L;
+    const look = { pal, bridge: dark ? '#F2ECE4' : '#1E1117', hubRing: dark ? 'rgba(242,236,228,0.35)' : 'rgba(30,17,23,0.35)', intra: dark ? 0.3 : 0.38, cloud: dark ? 0.16 : 0.13 };
+    const scope = st.scope ?? 'between';
+    const scopeDef = SCOPES.find((s) => s.id === scope);
+    const ti = st.t ?? 0;
+    const cty = st.cty ?? 0;
+    const it = st.it ?? 0;
+    const wk = st.week ?? 4;
+    const mode = st.mode ?? 'all';
+    const sel = st.sel ?? null;
+    let T;
+    let key;
+    let base;
+    if (scope === 'within') {
+      const I = INNER[it];
+      T = { label: 'Inside ' + COUNTRIES[cty] + ' · ' + I.label, shape: I.shape, comms: I.comms, q: I.q.replace('{c}', COUNTRIES[cty]), read: I.read };
+      key = 'in' + cty + '-' + it;
+      base = 500 + cty * 41 + it * 7;
+    } else {
+      T = TOPICS[ti];
+      key = 't' + ti;
+      base = 1009 + ti * 97;
+    }
+    const g = this.net(T, key, base, wk);
+    const pickNode = (i) => this.setState({ sel: (this.state || {}).sel === i ? null : i });
+    const view = this.draw(g, Object.assign({ mode, sel, pickNode }, look));
+    const fg = dark ? '#F2ECE4' : '#1E1117';
+    const bg = dark ? '#140A0E' : '#F4EFE8';
+    const fg2 = dark ? '#D8CCC8' : '#4A3A40';
+    const ln = dark ? 'rgba(242,236,228,0.14)' : 'rgba(30,17,23,0.16)';
+    const chip = (on) => 'min-height: 44px; padding: 0 18px; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid ' + (on ? fg : ln) + '; background: ' + (on ? fg : 'transparent') + '; color: ' + (on ? bg : fg2);
+    const scopes = SCOPES.map((s) => ({
+      label: s.label, hint: s.hint, on: s.id === scope,
+      style: 'display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px; border: none; border-bottom: 2px solid ' + (s.id === scope ? (dark ? '#E8838F' : '#B5384F') : 'transparent') + '; margin-bottom: -1px; background: transparent; color: ' + (s.id === scope ? fg : fg2) + '; font: inherit; text-align: left; cursor: pointer',
+      pick: () => {
+        const first = TOPICS.findIndex((t) => t.g === s.g);
+        const cur = (this.state || {}).t ?? 0;
+        this.setState({ scope: s.id, sel: null, t: s.g >= 0 && TOPICS[cur].g !== s.g ? first : cur });
+      }
+    }));
+    const listChips = TOPICS.map((t, i) => ({ t, i })).filter((x) => x.t.g === scopeDef.g).map((x) => ({
+      label: x.t.label, on: x.i === ti, style: chip(x.i === ti), pick: () => this.setState({ t: x.i, sel: null })
+    }));
+    const countryChips = COUNTRIES.map((c, i) => ({ label: c, on: i === cty, style: chip(i === cty), pick: () => this.setState({ cty: i, sel: null }) }));
+    const innerChips = INNER.map((t, i) => ({ label: t.label, on: i === it, style: chip(i === it), pick: () => this.setState({ it: i, sel: null }) }));
+    const lenses = [['all', 'All links'], ['bridges', 'Bridges'], ['clusters', 'Communities']].map((l) => ({
+      label: l[1], on: mode === l[0],
+      style: 'min-height: 40px; padding: 0 16px; border-radius: 999px; border: none; font: inherit; font-size: 14px; cursor: pointer; background: ' + (mode === l[0] ? (dark ? '#9FE3D6' : '#1F7A6E') : 'transparent') + '; color: ' + (mode === l[0] ? (dark ? '#140A0E' : '#FFFFFF') : fg2),
+      pick: () => this.setState({ mode: l[0] })
+    }));
+    const acc = dark ? '#E8838F' : '#B5384F';
+    const weeks = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
+      n, on: n === wk,
+      style: 'width: 44px; height: 44px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; border: 1px solid ' + (n === wk ? acc : ln) + '; background: ' + (n === wk ? acc : 'transparent') + '; color: ' + (n === wk ? (dark ? '#140A0E' : '#FFF8F4') : fg2),
+      pick: () => this.setState({ week: n, sel: null })
+    }));
+    const legend = T.comms.map((c, ci) => ({ name: c[0], color: pal[c[1]], share: Math.round((g.counts[ci] / 64) * 100) + '%' }));
+    const bridges = g.edges.filter((e) => e.br).slice(0, 5).map((e) => {
+      const a = g.nodes[e.i].ci;
+      const b = g.nodes[e.j].ci;
+      return {
+        text: T.comms[a][0] + ' ↔ ' + T.comms[b][0], ca: pal[T.comms[a][1]], cb: pal[T.comms[b][1]],
+        bg: sel === e.i ? (dark ? 'rgba(242,236,228,0.1)' : 'rgba(30,17,23,0.08)') : (dark ? 'rgba(242,236,228,0.03)' : 'rgba(30,17,23,0.03)'),
+        pick: () => this.setState({ sel: e.i })
+      };
+    });
+    let selInfo = { color: fg, role: '', desc: '', links: 0 };
+    if (sel !== null && g.nodes[sel]) {
+      const n = g.nodes[sel];
+      const comm = T.comms[n.ci][0];
+      const role = n.hub ? 'Hub' : (n.bridge ? 'Bridge' : 'Member');
+      const desc = n.hub ? 'A central account in ' + comm + '. Many others in this community repost or reply to it.' : (n.bridge ? 'Sits in ' + comm + ' but also links into another community, so posts can cross through it.' : 'An account in ' + comm + ', mostly talking within its own community.');
+      selInfo = { color: pal[T.comms[n.ci][1]], role: role + ' · ' + comm, desc, links: n.deg };
+    }
+    const hi = st.hero ?? 0;
+    const H = HERO[hi];
+    const moving = this.props.motion ?? true;
+    const heroG = this.draw(this.heroGraph(H), Object.assign({ mode: 'all', scale: 1.1 }, look));
+    const heroStory = { kicker: L(H.kicker), title: L(H.title), count: '0' + (hi + 1) + ' / 0' + HERO.length, flags: flagList(H.flags) };
+    const heroOpen = () => this.setState(Object.assign({ scope: H.sc, sel: null, week: 4 }, H.sc === 'within' ? { cty: H.cty, it: H.it } : { t: H.t }));
+    const heroDots = HERO.map((h, i) => ({
+      label: 'Show featured story ' + (i + 1) + ': ' + h.title, on: i === hi,
+      cls: i === hi ? 'prog' : '', tf: i === hi && !moving ? 'scaleX(1)' : 'scaleX(0)',
+      pick: () => { this.setState({ hero: i }); this.startCycle(); }
+    }));
+    const storyDefs = [
+      { id: 'leaders', sc: 'regional', topic: { label: 'Summer heat in the Gulf', shape: 'quad', comms: [['A football fan page', 'rose'], ['A car-meet account', 'sand'], ['A home-cooking channel', 'teal'], ['A Nabati poetry account', 'mist'], ['Official accounts', 'dusk']] }, seed: 4242, leaders: 4, noteLeft: true, lab: [[290, 205, 'start'], [595, 112, 'middle'], [215, 352, 'middle'], [585, 352, 'middle'], [400, 262, 'middle']], co: [2, 3, 470, 488, 'start', 0, 0], href: 'StoryLeaders.dc.html', kind: 'network', nums: { a: ['#1 · 41,200 reposts', '#2 · 33,800 reposts', '#3 · 29,100 reposts', '#4 · 24,600 reposts', '#11 · 6,300 reposts'], q: '0.47', n: 'n = 11,604 accounts · 52,118 ties', br: ['The four co-repost', '38% of heat reposts'] }, label: 'Network', kicker: 'Across the Gulf', title: 'Four accounts nobody expected are leading the Gulf’s summer-heat conversation', w: 360, bg: '#1E1117' },
+      { id: 'complaints', sc: 'regional', t: 5, flags: ['eg', 'jo', 'ma'], href: 'StoryComplaints.dc.html', kind: 'od', od: { big: 5, hour: 'Hour of complaint', out: 'Complaints out', in: 'Complaints in', maxOut: '6.1k', maxIn: '5.4k', tx: 500, co: 'EG → JO, the busiest route', sub: 'gamers to students, 22.6%', n: 'n = 18,240 posts', when: 'Aug–Sep 2026' }, label: 'Origin–destination flow', kicker: 'Across the region', title: 'Mobile data caps: unexpected complaints, where they start and where they spread', w: 420, bg: '#1A1014' },
+      { sc: 'regional', t: 4, kind: 'glyph', label: 'Glyph map', kicker: 'Across the region', title: 'Each city’s topic mix, and the links between them', w: 400, bg: '#160D12' },
+      { sc: 'within', cty: 4, it: 0, flags: ['lb'], kind: 'roseArea', label: 'Radial area chart', kicker: 'Inside Lebanon', title: 'One day of Lebanese posting, hour by hour', w: 300, bg: '#121A18' },
+      { sc: 'platform', t: 8, kind: 'network', nums: { a: ['318 outlets', '1,204 commentators', '11,760 users'], q: '0.41', n: 'n = 13,282 accounts · 58,940 ties', br: ['96 relays', '58% of replies'] }, label: 'Network', kicker: 'Platforms', title: 'Who sets the agenda on X, and who only amplifies', w: 340, bg: '#141016' },
+      { sc: 'regional', t: 5, kind: 'mantel', label: 'Correlation matrix', kicker: 'Across the region', title: 'Which themes move together, and which platforms drive them', w: 420, bg: '#1E1117' },
+      { sc: 'within', cty: 3, it: 2, flags: ['jo'], kind: 'sankey', label: 'Alluvial flow', kicker: 'Inside Jordan', title: 'Who posts about water, how they frame it, and where it travels', w: 400, bg: '#14231F' },
+      { sc: 'platform', t: 10, kind: 'bracket', label: 'Funnel Sankey', kicker: 'Platform', title: 'How sixteen Telegram channels funnel into one headline', w: 400, bg: '#121F1D' }
+    ];
+    const darkLook = { pal: PAL_D, bridge: '#F2ECE4', hubRing: 'rgba(242,236,228,0.35)', intra: 0.3, cloud: 0.16 };
+    const stories = storyDefs.map((s) => {
+      let gg;
+      let comms;
+      if (s.topic) {
+        comms = s.topic.comms;
+        gg = this.net(s.topic, 'x-' + s.id, s.seed || 777, 4);
+      } else if (s.sc === 'within') {
+        const I = INNER[s.it];
+        comms = I.comms;
+        gg = this.net({ label: '', shape: I.shape, comms: I.comms }, 'in' + s.cty + '-' + s.it, 500 + s.cty * 41 + s.it * 7, 4);
+      } else {
+        comms = TOPICS[s.t].comms;
+        gg = this.net(TOPICS[s.t], 't' + s.t, 1009 + s.t * 97, 4);
+      }
+      return {
+        kicker: L(s.kicker), title: L(s.title), label: L(s.label), href: s.href || '#stories', w: s.w + 'px', bg: s.bg, photo: !!s.photo, flags: flagList(s.flags),
+        v: this.viz(s, comms, gg, darkLook),
+        pick: () => this.setState(Object.assign({ scope: s.sc, sel: null, week: 4 }, s.sc === 'within' ? { cty: s.cty, it: s.it } : { t: s.t }))
+      };
+    });
+    const tickerBase = TOPICS.map((t) => ({ label: L(t.label), color: pal[t.comms[0][1]] })).concat([
+      { label: L('Inside Egypt · Cost of living'), color: pal.rose }, { label: L('Inside Jordan · Water and heat'), color: pal.mist },
+      { label: L('Inside Morocco · Football'), color: pal.sand }, { label: L('Inside Iraq · Jobs and work'), color: pal.teal }
+    ]);
+    return {
+      motionCls: (this.props.motion ?? true) ? 'moving' : '',
+      themeVars: THEMES[theme] + ';--ffEn:\'Geist\', \'Segoe UI\', sans-serif;--ffAr:\'IBM Plex Sans Arabic\', \'Segoe UI\', sans-serif;--ff:' + (ar ? 'var(--ffAr)' : 'var(--ffEn)'),
+      logo: dark ? 'blob-b47417df304e9333efe033883b8ed58d.svg' : 'blob-5727cccce94d49e2614f65c2f476aa94.svg',
+      heroStory, heroOpen, heroDots, socials: SOCIALS.map((so) => Object.assign({}, so, { name: L(so.name) })),
+      ui: UI[lang], lang, dir: ar ? 'rtl' : 'ltr', langCls: ar ? 'ar' : '', otherLang: ar ? 'en' : 'ar', langAria: ar ? 'Switch to English' : 'التبديل إلى العربية',
+      langBtnFont: ar ? 'var(--ffEn)' : 'var(--ffAr)',
+      toggleLang: () => this.setState({ lang: ar ? 'en' : 'ar' }),
+      carry: () => writeCarry(theme, lang),
+      toggleTheme: () => this.setState({ th: dark ? 'light' : 'dark' }),
+      storiesPrev: (e) => this.scrollStories(e, -1),
+      storiesNext: (e) => this.scrollStories(e, 1),
+      themeLabel: dark ? 'Switch to light theme' : 'Switch to dark theme',
+      topic: { scope: scopeDef.label, label: T.label, q: T.q, read: T.read, alt: 'Network of ' + T.label + ': ' + T.comms.map((c) => c[0]).join(', ') },
+      view, scopes, isWithin: scope === 'within', isList: scope !== 'within', listChips, countryChips, innerChips,
+      countryName: COUNTRIES[cty], lenses, weeks, weekNo: wk, legend, bridges,
+      hasSel: sel !== null && !!g.nodes[sel], sel: selInfo, clearSel: () => this.setState({ sel: null }),
+      hero: { edges: heroG.edges, nodes: heroG.nodes }, stories, ticker: tickerBase.concat(tickerBase, tickerBase, tickerBase), principles: ar ? PRINCIPLES_AR : PRINCIPLES
+    };
+  }
+}
+</script>
+</body>
+</html>
